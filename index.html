@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CPA会计学习平台</title>
+<style>
+  :root {
+    --bg: #f0f2f5;
+    --card: #ffffff;
+    --text: #1a1a2e;
+    --sub: #6b7280;
+    --primary: #4f46e5;
+    --primary-light: #eef2ff;
+    --green: #10b981;
+    --green-bg: #ecfdf5;
+    --blue: #3b82f6;
+    --blue-bg: #eff6ff;
+    --purple: #8b5cf6;
+    --purple-bg: #f5f3ff;
+    --orange: #f59e0b;
+    --orange-bg: #fffbeb;
+    --red: #ef4444;
+    --border: #e5e7eb;
+    --radius: 14px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --nav-h: 64px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: calc(var(--nav-h) + 24px);
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    color: #fff;
+    padding: 20px 20px 28px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .header-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .header-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+  .header-name { font-size: 16px; font-weight: 600; }
+  .header-sub { font-size: 12px; opacity: 0.75; }
+  .btn-logout {
+    background: rgba(255,255,255,0.15);
+    border: none;
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .btn-logout:active { background: rgba(255,255,255,0.25); }
+
+  /* Check-in Card */
+  .checkin-card {
+    background: var(--card);
+    margin: -16px 16px 16px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    z-index: 10;
+  }
+  .checkin-info { display: flex; align-items: center; gap: 12px; }
+  .checkin-icon {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+  }
+  .checkin-icon.done { background: var(--green-bg); }
+  .checkin-icon.todo { background: #fef3c7; }
+  .checkin-title { font-size: 14px; font-weight: 600; }
+  .checkin-sub { font-size: 12px; color: var(--sub); margin-top: 2px; }
+  .checkin-streak { text-align: center; }
+  .checkin-streak-num { font-size: 28px; font-weight: 800; color: var(--primary); }
+  .checkin-streak-label { font-size: 11px; color: var(--sub); }
+  .btn-checkin {
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-checkin.go {
+    background: var(--primary);
+    color: #fff;
+  }
+  .btn-checkin.go:active { transform: scale(0.96); opacity: 0.9; }
+  .btn-checkin.done {
+    background: var(--green-bg);
+    color: var(--green);
+    cursor: default;
+  }
+
+  /* Section */
+  .section { padding: 8px 16px 4px; }
+  .section-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  /* Chapter Grid */
+  .chapter-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 0 16px 16px;
+  }
+  .chapter-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 14px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    border-left: 3px solid transparent;
+    position: relative;
+    overflow: hidden;
+  }
+  .chapter-card:active { transform: scale(0.97); }
+  .chapter-card .ch-num {
+    font-size: 11px;
+    font-weight: 700;
+    opacity: 0.7;
+    margin-bottom: 4px;
+  }
+  .chapter-card .ch-title {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.3;
+    margin-bottom: 8px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .progress-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .progress-bar {
+    flex: 1;
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+  }
+  .progress-pct {
+    font-size: 12px;
+    font-weight: 600;
+    min-width: 36px;
+    text-align: right;
+  }
+  .ch-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-weight: 600;
+  }
+  .badge-done { background: var(--green-bg); color: #065f46; }
+  .badge-ip { background: #fef3c7; color: #92400e; }
+  .badge-new { background: #f3f4f6; color: #6b7280; }
+
+  /* Block color themes */
+  .block-1 .chapter-card { border-left-color: #10b981; }
+  .block-1 .progress-fill { background: #10b981; }
+  .block-1 .section-dot { background: #10b981; }
+  .block-2 .chapter-card { border-left-color: #3b82f6; }
+  .block-2 .progress-fill { background: #3b82f6; }
+  .block-2 .section-dot { background: #3b82f6; }
+  .block-3 .chapter-card { border-left-color: #8b5cf6; }
+  .block-3 .progress-fill { background: #8b5cf6; }
+  .block-3 .section-dot { background: #8b5cf6; }
+  .block-4 .chapter-card { border-left-color: #f59e0b; }
+  .block-4 .progress-fill { background: #f59e0b; }
+  .block-4 .section-dot { background: #f59e0b; }
+
+  /* Bottom Nav */
+  .nav-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--nav-h);
+    background: var(--card);
+    border-top: 1px solid var(--border);
+    display: flex;
+    z-index: 200;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--sub);
+    text-decoration: none;
+    font-size: 11px;
+    gap: 3px;
+    transition: color 0.2s;
+  }
+  .nav-item.active { color: var(--primary); }
+  .nav-item .nav-icon { font-size: 20px; }
+
+  /* Spinner */
+  .spinner-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(255,255,255,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+  }
+  .spinner {
+    width: 40px; height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+  }
+  .toast.show { opacity: 1; }
+  .toast.success { background: #10b981; color: #fff; }
+  .toast.error { background: #ef4444; color: #fff; }
+
+  @media (min-width: 768px) {
+    body { max-width: 800px; margin: 0 auto; }
+    .chapter-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="spinner-overlay" id="spinner"><div class="spinner"></div></div>
+
+<div class="header">
+  <div class="header-top">
+    <div class="header-user">
+      <div class="header-avatar">👤</div>
+      <div>
+        <div class="header-name" id="userName">加载中...</div>
+        <div class="header-sub">CPA会计 · 高志谦讲义</div>
+      </div>
+    </div>
+    <button class="btn-logout" onclick="signout()">退出</button>
+  </div>
+</div>
+
+<div class="checkin-card" id="checkinCard">
+  <div class="checkin-info">
+    <div class="checkin-icon todo" id="checkinIcon">📅</div>
+    <div>
+      <div class="checkin-title" id="checkinTitle">今日打卡</div>
+      <div class="checkin-sub" id="checkinSub">坚持学习，养成习惯</div>
+    </div>
+  </div>
+  <div class="checkin-streak">
+    <div class="checkin-streak-num" id="streakCount">0</div>
+    <div class="checkin-streak-label">连续打卡</div>
+  </div>
+  <button class="btn-checkin go" id="btnCheckin" onclick="doCheckin()">打 卡</button>
+</div>
+
+<div id="chapterList"><!-- Dynamically rendered --></div>
+
+<nav class="nav-bar">
+  <a class="nav-item active" href="/index.html">
+    <span class="nav-icon">📖</span>首页
+  </a>
+  <a class="nav-item" href="/wrongbook.html">
+    <span class="nav-icon">📝</span>错题本
+  </a>
+  <a class="nav-item" href="/report.html">
+    <span class="nav-icon">📊</span>学习报告
+  </a>
+  <a class="nav-item" href="/leaderboard.html">
+    <span class="nav-icon">🏆</span>排行榜
+  </a>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script src="supabase.js"></script>
+<script>
+// ============ State ============
+var chaptersMeta = [];   // from chapters.json
+var progress = {};       // {chapter_id: {status, time_spent_seconds, ...}}
+var checkins = [];       // recent checkins
+var sessions = {};       // today's study time by user
+var user = null;
+var todayStr = new Date().toISOString().split('T')[0];
+
+// Block definitions
+var BLOCKS = [
+  { num: 1, title: '第一版块 总论', cls: 'block-1', chIds: [1] },
+  { num: 2, title: '第二版块 常规非现金资产专题', cls: 'block-2', chIds: [2,3,4,5,6,7,8] },
+  { num: 3, title: '第三版块 长期股权投资与金融工具专题', cls: 'block-3', chIds: [9,10] },
+  { num: 4, title: '第四版块 负债及所有者权益专题', cls: 'block-4', chIds: [11,12,13,14,15,16] }
+];
+
+// ============ Init ============
+async function init() {
+  try {
+    user = await requireAuth();
+    if (!user) return;
+    document.getElementById('userName').textContent = displayName();
+
+    // Load chapter metadata
+    var resp = await fetch('/data/chapters.json');
+    var data = await resp.json();
+    chaptersMeta = data.chapters;
+
+    // Load data from Supabase
+    await loadData();
+    renderAll();
+
+    document.getElementById('spinner').style.display = 'none';
+  } catch (e) {
+    console.error('Init error:', e);
+    document.getElementById('spinner').style.display = 'none';
+    showToast('加载失败，请检查网络后刷新', 'error');
+  }
+}
+
+async function loadData() {
+  try {
+    var uid = userId();
+    // Load progress
+    var progData = await dbGet('user_progress', 'user_id=eq.' + uid);
+    progData.forEach(function(p) {
+      progress[p.chapter_id] = p;
+    });
+
+    // Load today's checkin
+    var chkData = await dbGet('checkins', 'user_id=eq.' + uid + '&checkin_date=eq.' + todayStr);
+    if (chkData.length > 0) {
+      checkins = chkData;
+    }
+
+    // Load streak (recent checkins sorted by date)
+    var allChk = await dbGet('checkins', 'user_id=eq.' + uid + '&order=checkin_date.desc&limit=60');
+    checkins = allChk;
+
+    // Load today's study sessions for all users (for social display)
+    var todaySessions = await dbGet('study_sessions', 'session_date=eq.' + todayStr);
+    todaySessions.forEach(function(s) {
+      if (!sessions[s.user_id]) sessions[s.user_id] = 0;
+      sessions[s.user_id] += s.duration_seconds;
+    });
+
+  } catch (e) {
+    console.log('Data load partial:', e.message);
+    // Continue with whatever we have
+  }
+}
+
+// ============ Render ============
+function renderAll() {
+  renderCheckinCard();
+  renderChapters();
+}
+
+function renderCheckinCard() {
+  var todayChecked = checkins.some(function(c) { return c.checkin_date === todayStr; });
+  var streak = calcStreak();
+
+  document.getElementById('streakCount').textContent = streak;
+  var icon = document.getElementById('checkinIcon');
+  var btn = document.getElementById('btnCheckin');
+  var title = document.getElementById('checkinTitle');
+  var sub = document.getElementById('checkinSub');
+
+  if (todayChecked) {
+    icon.className = 'checkin-icon done';
+    icon.textContent = '✅';
+    btn.className = 'btn-checkin done';
+    btn.textContent = '已打卡';
+    btn.onclick = null;
+    title.textContent = '今日已打卡';
+    sub.textContent = '太棒了！继续保持';
+  } else {
+    icon.className = 'checkin-icon todo';
+    icon.textContent = '📅';
+    btn.className = 'btn-checkin go';
+    btn.textContent = '打 卡';
+    btn.onclick = doCheckin;
+    title.textContent = '今日打卡';
+    sub.textContent = '坚持学习，养成习惯';
+  }
+
+  // Show today's study time if available
+  var uid = userId();
+  if (sessions[uid]) {
+    var mins = Math.round(sessions[uid] / 60);
+    sub.textContent = (todayChecked ? '已打卡 · ' : '') + '今日学习 ' + mins + ' 分钟';
+  }
+}
+
+function calcStreak() {
+  if (checkins.length === 0) return 0;
+  var streak = 0;
+  var d = new Date();
+  // Sort by date desc
+  var dates = checkins.map(function(c) { return c.checkin_date; }).sort().reverse();
+  var uniqueDates = [];
+  dates.forEach(function(dt) {
+    if (uniqueDates.indexOf(dt) === -1) uniqueDates.push(dt);
+  });
+
+  var current = new Date();
+  current.setHours(0,0,0,0);
+  var today = current.toISOString().split('T')[0];
+
+  // Check if today or yesterday is in the list
+  var hasToday = uniqueDates.indexOf(today) !== -1;
+  var yesterday = new Date(current);
+  yesterday.setDate(yesterday.getDate() - 1);
+  var yestStr = yesterday.toISOString().split('T')[0];
+  var hasYesterday = uniqueDates.indexOf(yestStr) !== -1;
+
+  if (!hasToday && !hasYesterday) return 0;
+
+  // Count backwards
+  var checkDate = hasToday ? new Date(current) : new Date(yesterday);
+  while (true) {
+    var ds = checkDate.toISOString().split('T')[0];
+    if (uniqueDates.indexOf(ds) !== -1) {
+      streak++;
+      checkDate.setDate(checkDate.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
+
+function renderChapters() {
+  var html = '';
+  BLOCKS.forEach(function(block) {
+    html += '<div class="' + block.cls + '">';
+    html += '<div class="section"><div class="section-title"><span class="section-dot"></span>' + block.title + '</div></div>';
+    html += '<div class="chapter-grid">';
+    block.chIds.forEach(function(chId) {
+      var ch = chaptersMeta.find(function(c) { return c.id === chId; });
+      if (!ch) return;
+      var prog = progress[chId];
+      var pct = 0;
+      var badge = '';
+      if (prog) {
+        if (prog.status === 'completed') { pct = 100; badge = '<span class="ch-badge badge-done">已完成</span>'; }
+        else if (prog.status === 'in_progress') { pct = Math.min(95, Math.round(prog.time_spent_seconds / 180)); badge = '<span class="ch-badge badge-ip">学习中</span>'; }
+        else { badge = '<span class="ch-badge badge-new">未开始</span>'; }
+      } else {
+        badge = '<span class="ch-badge badge-new">未开始</span>';
+      }
+
+      html += '<div class="chapter-card" onclick="openChapter(' + chId + ')">';
+      html += badge;
+      html += '<div class="ch-num">第 ' + chId + ' 章</div>';
+      html += '<div class="ch-title">' + ch.title + '</div>';
+      html += '<div class="progress-wrap">';
+      html += '<div class="progress-bar"><div class="progress-fill" style="width:' + pct + '%"></div></div>';
+      html += '<div class="progress-pct">' + pct + '%</div>';
+      html += '</div>';
+      html += '</div>';
+    });
+    html += '</div></div>';
+  });
+  document.getElementById('chapterList').innerHTML = html;
+}
+
+// ============ Actions ============
+function openChapter(chId) {
+  // Update progress
+  updateProgress(chId, 'in_progress');
+  window.location.href = '/reader.html?ch=' + chId;
+}
+
+async function doCheckin() {
+  var uid = userId();
+  if (!uid) return;
+  try {
+    // Get today's study time
+    var todaySessions = await dbGet('study_sessions', 'user_id=eq.' + uid + '&session_date=eq.' + todayStr);
+    var totalSec = 0;
+    todaySessions.forEach(function(s) { totalSec += s.duration_seconds; });
+
+    await dbPost('checkins', {
+      user_id: uid,
+      checkin_date: todayStr,
+      study_minutes: Math.round(totalSec / 60),
+      note: ''
+    });
+
+    // Reload checkins
+    var chkData = await dbGet('checkins', 'user_id=eq.' + uid + '&order=checkin_date.desc&limit=60');
+    checkins = chkData;
+
+    renderCheckinCard();
+    showToast('打卡成功！🔥', 'success');
+  } catch (e) {
+    console.error('Checkin error:', e);
+    showToast('打卡失败，请重试', 'error');
+  }
+}
+
+async function updateProgress(chId, status) {
+  var uid = userId();
+  if (!uid) return;
+  try {
+    var existing = progress[chId];
+    if (existing) {
+      await dbPatch('user_progress', existing.id, {
+        status: status,
+        started_at: existing.started_at || new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+    } else {
+      var result = await dbPost('user_progress', {
+        user_id: uid,
+        chapter_id: chId,
+        status: status,
+        started_at: new Date().toISOString(),
+        time_spent_seconds: 0
+      });
+      if (result && result.length > 0) {
+        progress[chId] = result[0];
+      }
+    }
+  } catch (e) {
+    console.log('Progress update deferred:', e.message);
+  }
+}
+
+// ============ Toast ============
+function showToast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type + ' show';
+  clearTimeout(t._tid);
+  t._tid = setTimeout(function() { t.className = 'toast'; }, 2000);
+}
+
+// ============ Page Visibility for timer ============
+document.addEventListener('visibilitychange', function() {
+  if (document.hidden) {
+    window._hiddenTime = Date.now();
+  } else if (window._hiddenTime) {
+    window._hiddenTime = 0;
+  }
+});
+
+init();
+</script>
+</body>
+</html>
