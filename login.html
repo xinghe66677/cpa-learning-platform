@@ -3,132 +3,120 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>CPA会计学习平台 - 登录</title>
+<title>选择账号 - CPA会计</title>
 <style>
   :root {
-    --bg: #f5f5f5;
-    --card: #ffffff;
-    --text: #2c3e50;
-    --sub: #7f8c8d;
-    --primary: #4A90D9;
-    --primary-dark: #357ABD;
-    --border: #e0e6ed;
-    --err: #e74c3c;
-    --radius: 16px;
-    --shadow: 0 4px 24px rgba(0,0,0,0.08);
+    --bg: #f0f2f5; --card: #fff; --text: #1a1a2e; --sub: #6b7280;
+    --primary: #4f46e5; --border: #e5e7eb; --radius: 16px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.06);
   }
   * { margin:0; padding:0; box-sizing:border-box; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     padding: 20px;
     -webkit-tap-highlight-color: transparent;
   }
-  .container { width: 100%; max-width: 420px; }
+  .container { width: 100%; max-width: 440px; }
   .logo {
-    text-align: center;
-    color: #fff;
-    margin-bottom: 32px;
+    text-align: center; color: #fff; margin-bottom: 28px;
   }
-  .logo-icon { font-size: 48px; display: block; margin-bottom: 8px; }
+  .logo-icon { font-size: 52px; display: block; margin-bottom: 8px; }
   .logo h1 { font-size: 24px; font-weight: 700; }
   .logo p { font-size: 14px; opacity: 0.85; margin-top: 4px; }
+
   .card {
-    background: var(--card);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    padding: 32px 28px;
+    background: var(--card); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 28px 24px;
   }
-  .tabs { display: flex; margin-bottom: 28px; border-bottom: 2px solid var(--border); }
-  .tab {
-    flex: 1;
-    text-align: center;
-    padding: 12px 0;
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--sub);
-    background: none;
-    border: none;
-    border-bottom: 2px solid transparent;
-    margin-bottom: -2px;
-    cursor: pointer;
-    transition: all 0.2s;
+  .card-title {
+    font-size: 17px; font-weight: 700; text-align: center;
+    color: var(--text); margin-bottom: 6px;
   }
-  .tab.active {
-    color: var(--primary);
-    border-bottom-color: var(--primary);
+  .card-sub {
+    font-size: 13px; color: var(--sub); text-align: center; margin-bottom: 24px;
   }
-  .form-group { margin-bottom: 20px; }
-  .form-group label {
-    display: block;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text);
-    margin-bottom: 6px;
+
+  .slot-list { display: flex; flex-direction: column; gap: 10px; }
+  .slot-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 16px; border-radius: 12px;
+    border: 2px solid var(--border); background: #fafbfc;
+    cursor: pointer; transition: all 0.15s;
   }
-  .form-group input {
-    width: 100%;
-    padding: 12px 16px;
-    font-size: 15px;
-    border: 2px solid var(--border);
-    border-radius: 12px;
-    transition: border-color 0.2s;
-    background: #fafbfc;
-    outline: none;
+  .slot-item:hover { border-color: #c7d2fe; background: #f5f3ff; }
+  .slot-item:active { transform: scale(0.98); }
+  .slot-item.selected { border-color: var(--primary); background: #eef2ff; }
+
+  .slot-avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 700; flex-shrink: 0;
   }
-  .form-group input:focus { border-color: var(--primary); background: #fff; }
-  #nameGroup { display: none; }
-  .btn {
-    width: 100%;
-    padding: 14px;
-    font-size: 16px;
-    font-weight: 600;
-    color: #fff;
-    background: var(--primary);
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: background 0.2s, transform 0.1s;
-    margin-top: 8px;
+  .slot-info { flex: 1; min-width: 0; }
+  .slot-name {
+    font-size: 16px; font-weight: 600; color: var(--text);
   }
-  .btn:hover { background: var(--primary-dark); }
-  .btn:active { transform: scale(0.98); }
-  .btn:disabled { opacity: 0.6; cursor: not-allowed; }
-  .error {
-    color: var(--err);
-    font-size: 13px;
-    text-align: center;
-    margin-top: 12px;
-    min-height: 20px;
-    line-height: 20px;
+  .slot-hint { font-size: 12px; color: var(--sub); margin-top: 2px; }
+  .slot-edit {
+    font-size: 12px; color: var(--primary); background: none; border: none;
+    cursor: pointer; padding: 6px 10px; border-radius: 6px;
+    font-weight: 600; flex-shrink: 0;
   }
-  .success {
-    color: #27ae60;
-    font-size: 13px;
-    text-align: center;
-    margin-top: 12px;
+  .slot-edit:hover { background: #eef2ff; }
+
+  .avatar-colors {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
   }
+  .avatar-colors:nth-child(2) { background: linear-gradient(135deg, #10b981, #059669); }
+  .avatar-colors:nth-child(3) { background: linear-gradient(135deg, #f59e0b, #d97706); }
+  .avatar-colors:nth-child(4) { background: linear-gradient(135deg, #ef4444, #dc2626); }
+  .avatar-colors:nth-child(5) { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+
+  .btn-go {
+    width: 100%; padding: 14px; margin-top: 20px;
+    background: var(--primary); color: #fff;
+    border: none; border-radius: 12px;
+    font-size: 16px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .btn-go:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-go:active:not(:disabled) { transform: scale(0.97); }
+
+  /* Rename modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4); z-index: 500;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    background: #fff; border-radius: var(--radius);
+    padding: 28px 24px; width: 90%; max-width: 340px;
+    text-align: center; animation: popIn 0.2s ease;
+  }
+  @keyframes popIn { from { transform:scale(0.9); opacity:0; } to { transform:scale(1); opacity:1; } }
+  .modal-box h3 { font-size: 18px; margin-bottom: 16px; }
+  .modal-box input {
+    width: 100%; padding: 12px; font-size: 16px;
+    border: 2px solid var(--border); border-radius: 10px;
+    text-align: center; outline: none; margin-bottom: 16px;
+  }
+  .modal-box input:focus { border-color: var(--primary); }
+  .modal-btns { display: flex; gap: 10px; }
+  .modal-btns button {
+    flex: 1; padding: 10px; border-radius: 8px;
+    font-size: 14px; font-weight: 600; cursor: pointer; border: none;
+  }
+  .btn-save { background: var(--primary); color: #fff; }
+  .btn-cancel { background: #f3f4f6; color: var(--sub); }
+
   .footer-text {
-    text-align: center;
-    color: rgba(255,255,255,0.7);
-    font-size: 12px;
-    margin-top: 24px;
+    text-align: center; color: rgba(255,255,255,0.6);
+    font-size: 12px; margin-top: 20px;
   }
-  .spinner {
-    display: inline-block;
-    width: 18px; height: 18px;
-    border: 2px solid rgba(255,255,255,0.3);
-    border-top-color: #fff;
-    border-radius: 50%;
-    animation: spin 0.6s linear infinite;
-    vertical-align: middle;
-    margin-right: 6px;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -140,120 +128,178 @@
   </div>
 
   <div class="card">
-    <div class="tabs">
-      <button class="tab active" id="tabLogin" onclick="switchTab('login')">登录</button>
-      <button class="tab" id="tabReg" onclick="switchTab('register')">注册</button>
-    </div>
+    <div class="card-title">👋 选择你的学习账号</div>
+    <div class="card-sub">每个人的学习进度独立保存</div>
 
-    <form id="authForm" onsubmit="handleSubmit(event)">
-      <div class="form-group" id="nameGroup">
-        <label>显示名称</label>
-        <input type="text" id="name" placeholder="请输入你的名字" maxlength="20">
-      </div>
-      <div class="form-group">
-        <label>邮箱</label>
-        <input type="email" id="email" placeholder="请输入邮箱" required>
-      </div>
-      <div class="form-group">
-        <label>密码</label>
-        <input type="password" id="password" placeholder="请输入密码（至少6位）" minlength="6" required>
-      </div>
-      <button type="submit" class="btn" id="submitBtn">登 录</button>
-    </form>
+    <div class="slot-list" id="slotList"></div>
 
-    <div class="error" id="errorMsg"></div>
+    <button class="btn-go" id="btnGo" disabled onclick="goLearn()">进入学习 →</button>
   </div>
 
   <p class="footer-text">仅限内部学习使用 · 最多5人</p>
 </div>
 
+<!-- Rename Modal -->
+<div class="modal-overlay" id="renameModal">
+  <div class="modal-box">
+    <h3>✏️ 修改名称</h3>
+    <input type="text" id="renameInput" placeholder="输入你的名字" maxlength="10">
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeRename()">取消</button>
+      <button class="btn-save" onclick="saveRename()">保存</button>
+    </div>
+  </div>
+</div>
+
 <script src="supabase.js"></script>
 <script>
-  var mode = 'login';
+var profiles = [];
+var selectedSlot = null;
+var editingSlot = null;
 
-  function switchTab(tab) {
-    mode = tab;
-    var t1 = document.getElementById('tabLogin');
-    var t2 = document.getElementById('tabReg');
-    var ng = document.getElementById('nameGroup');
-    var btn = document.getElementById('submitBtn');
-    var err = document.getElementById('errorMsg');
+// Avatar emojis per slot
+var AVATARS = ['🦊', '🐱', '🐼', '🐨', '🦉'];
 
-    err.textContent = '';
-
-    if (tab === 'register') {
-      t1.classList.remove('active');
-      t2.classList.add('active');
-      ng.style.display = 'block';
-      btn.textContent = '注 册';
-      document.getElementById('name').required = true;
-    } else {
-      t1.classList.add('active');
-      t2.classList.remove('active');
-      ng.style.display = 'none';
-      btn.textContent = '登 录';
-      document.getElementById('name').required = false;
-    }
-  }
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-    var btn = document.getElementById('submitBtn');
-    var err = document.getElementById('errorMsg');
-    var email = document.getElementById('email').value.trim();
-    var password = document.getElementById('password').value;
-    var name = document.getElementById('name').value.trim();
-
-    err.textContent = '';
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span>处理中...';
-
-    var result;
-    if (mode === 'register') {
-      result = await signup(email, password, name || email.split('@')[0]);
-      if (result.ok) {
-        err.className = 'success';
-        err.textContent = '注册成功！即将跳转...';
-        setTimeout(function() { window.location.href = '/index.html'; }, 800);
+async function init() {
+  // Check if already selected
+  var existing = getSlot();
+  if (existing && existing.slot_id) {
+    // Already logged in — verify slot still exists
+    try {
+      var resp = await fetch(SB_URL + '/rest/v1/profiles?slot_id=eq.' + existing.slot_id, { headers: apiHeaders() });
+      var data = await resp.json();
+      if (data.length > 0) {
+        // Valid — go straight to index
+        setSlot(existing.slot_id, data[0].display_name);
+        window.location.href = '/index.html';
         return;
       }
-    } else {
-      result = await signin(email, password);
-      if (result.ok) {
-        err.className = 'success';
-        err.textContent = '登录成功！即将跳转...';
-        setTimeout(function() { window.location.href = '/index.html'; }, 500);
-        return;
-      }
-    }
-
-    btn.disabled = false;
-    btn.textContent = mode === 'register' ? '注 册' : '登 录';
-    err.className = 'error';
-
-    // Parse error message
-    var msg = result.data && result.data.msg ? result.data.msg : '操作失败，请重试';
-    if (result.data && result.data.error_description) {
-      msg = result.data.error_description;
-    }
-    if (msg.includes('already registered') || msg.includes('already exists')) {
-      msg = '该邮箱已注册，请直接登录';
-    }
-    if (msg.includes('Invalid login')) {
-      msg = '邮箱或密码错误';
-    }
-    err.textContent = msg;
+    } catch(e) {}
   }
 
-  // Check if already logged in
-  (async function() {
-    var session = getSession();
-    if (session.access_token) {
-      document.getElementById('errorMsg').className = 'success';
-      document.getElementById('errorMsg').textContent = '已登录，跳转中...';
-      setTimeout(function() { window.location.href = '/index.html'; }, 300);
+  // Load profiles
+  await loadProfiles();
+}
+
+async function loadProfiles() {
+  try {
+    profiles = await getProfiles();
+    renderSlots();
+  } catch(e) {
+    console.error('Load profiles error:', e);
+    // Fallback: hardcoded slots
+    profiles = [
+      {slot_id:1, display_name:'学友1'}, {slot_id:2, display_name:'学友2'},
+      {slot_id:3, display_name:'学友3'}, {slot_id:4, display_name:'学友4'},
+      {slot_id:5, display_name:'学友5'}
+    ];
+    renderSlots();
+  }
+}
+
+function renderSlots() {
+  var html = '';
+  profiles.forEach(function(p) {
+    var isSelected = selectedSlot === p.slot_id;
+    var isDefault = p.display_name.indexOf('学友') === 0;
+    var cls = 'slot-item' + (isSelected ? ' selected' : '');
+    var hint = isDefault ? '点击选择并设置名字' : '点击选择此账号';
+
+    html += '<div class="' + cls + '" onclick="selectSlot(' + p.slot_id + ')" id="slot' + p.slot_id + '">';
+    html += '<div class="slot-avatar" style="background:var(--avatar-bg' + p.slot_id + ');color:#fff">' + AVATARS[p.slot_id - 1] + '</div>';
+    html += '<div class="slot-info">';
+    html += '<div class="slot-name">' + escapeHtml(p.display_name) + '</div>';
+    html += '<div class="slot-hint">' + hint + '</div>';
+    html += '</div>';
+    html += '<button class="slot-edit" onclick="event.stopPropagation();openRename(' + p.slot_id + ')">改名</button>';
+    html += '</div>';
+  });
+  document.getElementById('slotList').innerHTML = html;
+}
+
+function selectSlot(sid) {
+  selectedSlot = sid;
+  document.getElementById('btnGo').disabled = false;
+  renderSlots();
+  // Auto-save if name is already custom
+  var p = profiles.find(function(x) { return x.slot_id === sid; });
+  if (p && p.display_name.indexOf('学友') !== 0) {
+    setSlot(sid, p.display_name);
+  }
+}
+
+function openRename(sid) {
+  editingSlot = sid;
+  var p = profiles.find(function(x) { return x.slot_id === sid; });
+  document.getElementById('renameInput').value = p ? p.display_name : '';
+  document.getElementById('renameModal').classList.add('show');
+  setTimeout(function() { document.getElementById('renameInput').focus(); }, 100);
+}
+
+function closeRename() {
+  document.getElementById('renameModal').classList.remove('show');
+  editingSlot = null;
+}
+
+async function saveRename() {
+  var name = document.getElementById('renameInput').value.trim();
+  if (!name) { closeRename(); return; }
+
+  try {
+    await updateProfile(editingSlot, name);
+    var p = profiles.find(function(x) { return x.slot_id === editingSlot; });
+    if (p) p.display_name = name;
+    renderSlots();
+    // If this slot was selected, update stored name
+    if (selectedSlot === editingSlot) {
+      setSlot(editingSlot, name);
     }
-  })();
+    closeRename();
+  } catch(e) {
+    console.error('Rename error:', e);
+    // Still update locally
+    var p = profiles.find(function(x) { return x.slot_id === editingSlot; });
+    if (p) p.display_name = name;
+    renderSlots();
+    if (selectedSlot === editingSlot) setSlot(editingSlot, name);
+    closeRename();
+  }
+}
+
+async function goLearn() {
+  if (!selectedSlot) return;
+
+  var p = profiles.find(function(x) { return x.slot_id === selectedSlot; });
+  var name = p ? p.display_name : '学友' + selectedSlot;
+
+  // If still default name, prompt rename
+  if (name.indexOf('学友') === 0) {
+    openRename(selectedSlot);
+    // Wait a bit then redirect after rename
+    var checkInterval = setInterval(function() {
+      var updated = profiles.find(function(x) { return x.slot_id === selectedSlot; });
+      if (updated && updated.display_name.indexOf('学友') !== 0) {
+        clearInterval(checkInterval);
+        setSlot(selectedSlot, updated.display_name);
+        window.location.href = '/index.html';
+      }
+    }, 500);
+    // Timeout after 10s
+    setTimeout(function() { clearInterval(checkInterval); setSlot(selectedSlot, name); window.location.href = '/index.html'; }, 10000);
+    return;
+  }
+
+  setSlot(selectedSlot, name);
+  window.location.href = '/index.html';
+}
+
+function escapeHtml(str) {
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+init();
 </script>
 </body>
 </html>
