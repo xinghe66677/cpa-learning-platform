@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>学习阅读器 - CPA会计</title>
+<style>
+  :root {
+    --bg: #f0f2f5;
+    --card: #ffffff;
+    --text: #1a1a2e;
+    --sub: #6b7280;
+    --primary: #4f46e5;
+    --primary-light: #eef2ff;
+    --green: #10b981;
+    --border: #e5e7eb;
+    --radius: 12px;
+    --shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: #1a1a2e;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Top Toolbar */
+  .toolbar {
+    background: #2d2d44;
+    color: #fff;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    height: 52px;
+    z-index: 100;
+  }
+  .btn-icon {
+    background: rgba(255,255,255,0.1);
+    border: none;
+    color: #fff;
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .btn-icon:active { background: rgba(255,255,255,0.2); }
+  .toolbar-title {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .page-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+  }
+  .page-nav input {
+    width: 40px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 4px;
+    font-size: 13px;
+  }
+  .timer {
+    font-size: 12px;
+    color: rgba(255,255,255,0.6);
+    min-width: 48px;
+    text-align: right;
+  }
+
+  /* Main Area */
+  .main-area {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* PDF Container */
+  .pdf-container {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px;
+    gap: 4px;
+    background: #404060;
+    -webkit-overflow-scrolling: touch;
+  }
+  .pdf-page {
+    position: relative;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    background: #fff;
+    margin-bottom: 4px;
+  }
+  .pdf-page canvas {
+    display: block;
+  }
+  .textLayer {
+    position: absolute;
+    left: 0; top: 0;
+    right: 0; bottom: 0;
+    overflow: hidden;
+    opacity: 0.25;
+    line-height: 1.0;
+  }
+  .textLayer span {
+    color: transparent;
+    position: absolute;
+    white-space: pre;
+    cursor: text;
+    transform-origin: 0% 0%;
+  }
+  .textLayer ::selection {
+    background: rgba(79, 70, 229, 0.4);
+  }
+
+  /* AI Float Button */
+  .ai-float {
+    position: fixed;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    z-index: 500;
+    box-shadow: 0 4px 12px rgba(79,70,229,0.4);
+    display: none;
+    animation: popIn 0.2s ease;
+  }
+  @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  /* Right Panel (Desktop) */
+  .side-panel {
+    width: 380px;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    border-left: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .panel-tabs {
+    display: flex;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .panel-tab {
+    flex: 1;
+    padding: 12px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    color: var(--sub);
+    transition: all 0.2s;
+  }
+  .panel-tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+  }
+  .panel-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+  }
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--sub);
+  }
+  .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-state .hint { font-size: 13px; line-height: 1.6; }
+
+  /* AI Card */
+  .ai-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+    animation: slideUp 0.3s ease;
+  }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .ai-card .ai-selected {
+    background: var(--primary-light);
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--text);
+    margin-bottom: 12px;
+    border-left: 3px solid var(--primary);
+    max-height: 80px;
+    overflow-y: auto;
+  }
+  .ai-card .ai-answer {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text);
+  }
+  .ai-card .ai-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .ai-loading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    color: var(--sub);
+    font-size: 13px;
+  }
+  .ai-dot { width:6px; height:6px; border-radius:50%; background:var(--primary); animation:dotPulse 1.4s infinite ease-in-out both; }
+  .ai-dot:nth-child(1) { animation-delay: -0.32s; }
+  .ai-dot:nth-child(2) { animation-delay: -0.16s; }
+  @keyframes dotPulse { 0%,80%,100% { opacity:0.2; } 40% { opacity:1; } }
+
+  /* Note Card */
+  .note-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 12px;
+    margin-bottom: 10px;
+    box-shadow: var(--shadow);
+  }
+  .note-card .note-text {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .note-card .note-ref {
+    font-size: 11px;
+    color: var(--primary);
+    margin-bottom: 4px;
+    cursor: pointer;
+  }
+  .note-card .note-time {
+    font-size: 11px;
+    color: var(--sub);
+    margin-top: 6px;
+  }
+  .note-input-wrap {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 12px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+  }
+  .note-input-wrap textarea {
+    width: 100%;
+    min-height: 80px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+    outline: none;
+  }
+  .note-input-wrap textarea:focus { border-color: var(--primary); }
+  .note-input-wrap .note-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .btn-sm {
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-sm.primary { background: var(--primary); color: #fff; }
+  .btn-sm.ghost { background: #f3f4f6; color: var(--sub); }
+
+  /* Mobile panel overlay */
+  .panel-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 400;
+  }
+  .mobile-panel {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-height: 65vh;
+    background: var(--bg);
+    border-radius: 16px 16px 0 0;
+    z-index: 401;
+    flex-direction: column;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+  }
+  .mobile-panel .panel-handle {
+    width: 32px;
+    height: 4px;
+    background: #ccc;
+    border-radius: 2px;
+    margin: 10px auto;
+  }
+
+  /* Quiz link button */
+  .btn-quiz {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 54px; height: 54px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(79,70,229,0.4);
+    z-index: 300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .btn-quiz:active { transform: scale(0.92); }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .side-panel { display: none; }
+    .mobile-panel { display: flex; }
+    .panel-overlay.show { display: block; }
+    .mobile-panel.show { transform: translateY(0); }
+    .panel-overlay:not(.show) + .mobile-panel { transform: translateY(100%); }
+  }
+  @media (min-width: 901px) {
+    .panel-overlay, .mobile-panel { display: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Toolbar -->
+<div class="toolbar">
+  <button class="btn-icon" onclick="window.location.href='/index.html'" title="返回">←</button>
+  <span class="toolbar-title" id="chTitle">加载中...</span>
+  <div class="page-nav">
+    <button class="btn-icon" onclick="prevPage()" style="font-size:14px">◂</button>
+    <input type="number" id="pageInput" value="1" onchange="jumpPage()">
+    <span style="color:rgba(255,255,255,0.5);font-size:12px">/ <span id="totalPages">?</span></span>
+    <button class="btn-icon" onclick="nextPage()" style="font-size:14px">▸</button>
+  </div>
+  <button class="btn-icon" onclick="zoomOut()" title="缩小">−</button>
+  <button class="btn-icon" onclick="zoomIn()" title="放大">+</button>
+  <span class="timer" id="timer">00:00</span>
+</div>
+
+<!-- Main Area -->
+<div class="main-area">
+  <div class="pdf-container" id="pdfContainer">
+    <!-- PDF pages rendered here -->
+  </div>
+
+  <!-- Desktop side panel -->
+  <div class="side-panel" id="sidePanel">
+    <div class="panel-tabs">
+      <button class="panel-tab active" id="tabAI" onclick="switchPanel('ai')">🤖 AI讲解</button>
+      <button class="panel-tab" id="tabNotes" onclick="switchPanel('notes')">📝 笔记</button>
+    </div>
+    <div class="panel-content" id="panelContent">
+      <div class="empty-state">
+        <div class="icon">💡</div>
+        <div class="hint">在左侧 PDF 中选中文字<br>然后点击 "AI讲解" 按钮</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Mobile panel overlay -->
+<div class="panel-overlay" id="panelOverlay" onclick="closeMobilePanel()"></div>
+<div class="mobile-panel" id="mobilePanel">
+  <div class="panel-handle"></div>
+  <div class="panel-tabs">
+    <button class="panel-tab active" id="mTabAI" onclick="switchPanel('ai')">🤖 AI讲解</button>
+    <button class="panel-tab" id="mTabNotes" onclick="switchPanel('notes')">📝 笔记</button>
+  </div>
+  <div class="panel-content" id="mPanelContent">
+    <div class="empty-state">
+      <div class="icon">💡</div>
+      <div class="hint">选中文字后点击 AI讲解</div>
+    </div>
+  </div>
+</div>
+
+<!-- AI Float Button -->
+<button class="ai-float" id="aiFloat" onclick="explainSelection()">🤖 AI讲解</button>
+
+<!-- Quiz shortcut -->
+<button class="btn-quiz" onclick="openQuiz()" title="练习题">📝</button>
+
+<script src="supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+// ============ Config ============
+window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// ============ State ============
+var chapterId = parseInt(new URLSearchParams(window.location.search).get('ch') || '1');
+var chapterMeta = null;
+var pdfDoc = null;
+var currentPage = 1;
+var totalPages = 0;
+var scale = 1.2;
+var selectedText = '';
+var panelMode = 'ai';
+var user = null;
+
+// Timer
+var timerSec = 0;
+var timerInterval = null;
+var timerRunning = true;
+
+// ============ Chapter Metadata ============
+var CHAPTERS = [];
+
+async function init() {
+  user = await requireAuth();
+  if (!user) return;
+
+  // Load chapter metadata
+  try {
+    var resp = await fetch('/data/chapters.json');
+    var data = await resp.json();
+    CHAPTERS = data.chapters;
+    chapterMeta = CHAPTERS.find(function(c) { return c.id === chapterId; });
+    if (chapterMeta) {
+      document.getElementById('chTitle').textContent = '第' + chapterId + '章 ' + chapterMeta.title;
+      document.title = chapterMeta.title + ' - CPA会计';
+    }
+  } catch (e) {
+    console.log('Using default chapter info');
+  }
+
+  // Start timer
+  startTimer();
+
+  // Load PDF
+  loadPDF();
+
+  // Track visibility for timer
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+      timerRunning = false;
+      saveSession();
+    } else {
+      timerRunning = true;
+    }
+  });
+
+  // Track selection
+  document.addEventListener('mouseup', handleSelection);
+  document.addEventListener('touchend', handleSelection);
+
+  // Save session before leaving
+  window.addEventListener('beforeunload', function() {
+    saveSession();
+    saveProgress();
+  });
+}
+
+// ============ PDF Loading ============
+async function loadPDF() {
+  var pdfPath = '/pdfs/' + String(chapterId).padStart(2, '0') + '.pdf';
+  try {
+    var loadingTask = pdfjsLib.getDocument({
+      url: pdfPath,
+      cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/',
+      cMapPacked: true,
+    });
+    pdfDoc = await loadingTask.promise;
+    totalPages = pdfDoc.numPages;
+    document.getElementById('totalPages').textContent = totalPages;
+    document.getElementById('pageInput').max = totalPages;
+
+    // Update chapter metadata
+    if (chapterMeta) chapterMeta.pages = totalPages;
+
+    // Render all pages
+    await renderAllPages();
+
+    // Update progress
+    updateProgress(chapterId, 'in_progress');
+    saveProgress();
+
+  } catch (e) {
+    console.error('PDF load error:', e);
+    document.getElementById('pdfContainer').innerHTML =
+      '<div style="color:#fff;text-align:center;padding:60px 20px;"><p style="font-size:48px;margin-bottom:16px;">📄</p><p>PDF 加载失败</p><p style="font-size:13px;opacity:0.6;margin-top:8px;">请检查网络连接后刷新页面</p></div>';
+  }
+}
+
+async function renderAllPages() {
+  var container = document.getElementById('pdfContainer');
+  container.innerHTML = '';
+  for (var i = 1; i <= totalPages; i++) {
+    var pageDiv = document.createElement('div');
+    pageDiv.className = 'pdf-page';
+    pageDiv.id = 'page-' + i;
+    container.appendChild(pageDiv);
+
+    try {
+      var page = await pdfDoc.getPage(i);
+      var viewport = page.getViewport({ scale: scale });
+      var canvas = document.createElement('canvas');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      pageDiv.appendChild(canvas);
+
+      var ctx = canvas.getContext('2d');
+      await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+
+      // Text layer
+      var textLayerDiv = document.createElement('div');
+      textLayerDiv.className = 'textLayer';
+      textLayerDiv.style.width = viewport.width + 'px';
+      textLayerDiv.style.height = viewport.height + 'px';
+      pageDiv.appendChild(textLayerDiv);
+
+      var textContent = await page.getTextContent();
+      pdfjsLib.renderTextLayer({
+        textContent: textContent,
+        container: textLayerDiv,
+        viewport: viewport,
+        textDivs: []
+      });
+    } catch (e) {
+      console.log('Page ' + i + ' render error:', e.message);
+    }
+  }
+}
+
+// ============ Navigation ============
+function prevPage() {
+  if (currentPage > 1) {
+    currentPage--;
+    scrollToPage(currentPage);
+  }
+}
+function nextPage() {
+  if (currentPage < totalPages) {
+    currentPage++;
+    scrollToPage(currentPage);
+  }
+}
+function jumpPage() {
+  var p = parseInt(document.getElementById('pageInput').value);
+  if (p >= 1 && p <= totalPages) {
+    currentPage = p;
+    scrollToPage(p);
+  }
+}
+function scrollToPage(p) {
+  currentPage = p;
+  document.getElementById('pageInput').value = p;
+  var el = document.getElementById('page-' + p);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function zoomIn() { scale = Math.min(3, scale + 0.2); renderAllPages(); }
+function zoomOut() { scale = Math.max(0.5, scale - 0.2); renderAllPages(); }
+
+// ============ Text Selection ============
+function handleSelection(e) {
+  setTimeout(function() {
+    var sel = window.getSelection();
+    var text = sel ? sel.toString().trim() : '';
+    if (text.length > 0) {
+      selectedText = text;
+      // Position the float button near selection
+      var range = sel.getRangeAt(0);
+      var rect = range.getBoundingClientRect();
+      var btn = document.getElementById('aiFloat');
+      btn.style.display = 'block';
+      btn.style.top = (rect.bottom + 8) + 'px';
+      btn.style.left = Math.min(rect.left, window.innerWidth - 140) + 'px';
+    } else {
+      setTimeout(function() {
+        if (!window.getSelection() || !window.getSelection().toString().trim()) {
+          document.getElementById('aiFloat').style.display = 'none';
+        }
+      }, 200);
+    }
+  }, 50);
+}
+
+// Click elsewhere to dismiss float button
+document.addEventListener('click', function(e) {
+  if (e.target.id !== 'aiFloat' && !window.getSelection().toString().trim()) {
+    document.getElementById('aiFloat').style.display = 'none';
+  }
+});
+
+// ============ Panel Switching ============
+function switchPanel(mode) {
+  panelMode = mode;
+  // Update tab states
+  document.querySelectorAll('.panel-tab').forEach(function(t) { t.classList.remove('active'); });
+  var activeTab = document.getElementById(mode === 'ai' ? 'tabAI' : 'tabNotes');
+  var mActiveTab = document.getElementById(mode === 'ai' ? 'mTabAI' : 'mTabNotes');
+  if (activeTab) activeTab.classList.add('active');
+  if (mActiveTab) mActiveTab.classList.add('active');
+
+  if (mode === 'notes') {
+    loadNotes();
+  } else {
+    showEmptyPanel();
+  }
+
+  // On mobile, open panel if closed
+  if (window.innerWidth <= 900) {
+    openMobilePanel();
+  }
+}
+
+function showEmptyPanel() {
+  var html = '<div class="empty-state"><div class="icon">💡</div><div class="hint">在左侧 PDF 中选中文字<br>然后点击 "AI讲解" 按钮</div></div>';
+  getPanelContent().innerHTML = html;
+}
+
+function getPanelContent() {
+  return window.innerWidth <= 900
+    ? document.getElementById('mPanelContent')
+    : document.getElementById('panelContent');
+}
+
+function openMobilePanel() {
+  document.getElementById('panelOverlay').classList.add('show');
+  document.getElementById('mobilePanel').classList.add('show');
+}
+function closeMobilePanel() {
+  document.getElementById('panelOverlay').classList.remove('show');
+  document.getElementById('mobilePanel').classList.remove('show');
+}
+
+// ============ AI Explanation ============
+async function explainSelection() {
+  if (!selectedText || selectedText.length < 2) return;
+  document.getElementById('aiFloat').style.display = 'none';
+
+  var panel = getPanelContent();
+  panel.innerHTML = '<div class="ai-loading"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div> AI正在生成讲解...</div>';
+
+  if (window.innerWidth <= 900) openMobilePanel();
+  switchPanel('ai');
+
+  var chapterTitle = chapterMeta ? chapterMeta.title : '会计';
+
+  try {
+    var resp = await fetch('/ai/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {
+            role: 'system',
+            content: '你是一位中国注册会计师（CPA）考试辅导老师，精通《会计》科目。你的任务是用中文解释会计概念。要求：1. 语言通俗易懂 2. 如果涉及会计分录，用清晰的借贷格式展示 3. 将复杂概念拆解为简单步骤 4. 必要时给出记忆口诀或应试技巧 5. 控制回答在300字以内。'
+          },
+          {
+            role: 'user',
+            content: '我正在学习CPA会计的「' + chapterTitle + '」章节。请帮我理解这段内容：\n\n"""\n' + selectedText + '\n"""\n\n请用通俗易懂的中文解释上面这段内容。'
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 1200,
+        stream: false
+      })
+    });
+
+    var data = await resp.json();
+    var answer = data.choices && data.choices[0] ? data.choices[0].message.content : 'AI暂时无法回答，请稍后重试。';
+
+    panel.innerHTML = '<div class="ai-card">' +
+      '<div class="ai-label">📖 选中内容</div>' +
+      '<div class="ai-selected">' + escapeHtml(selectedText.substring(0, 300)) + (selectedText.length > 300 ? '...' : '') + '</div>' +
+      '<div class="ai-label">🤖 AI讲解</div>' +
+      '<div class="ai-answer">' + formatAIAnswer(answer) + '</div>' +
+      '<div style="margin-top:12px">' +
+        '<button class="btn-sm primary" onclick="saveAIExplanation()" style="margin-right:6px">💾 保存为笔记</button>' +
+        '<button class="btn-sm ghost" onclick="explainDeeper()">🔍 深入讲解</button>' +
+      '</div>' +
+    '</div>';
+
+    window._lastAIAnswer = answer;
+
+  } catch (e) {
+    console.error('AI error:', e);
+    panel.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><div class="hint">AI服务暂时不可用<br>请稍后重试</div></div>';
+  }
+}
+
+function formatAIAnswer(text) {
+  return text
+    .replace(/\n/g, '<br>')
+    .replace(/```([\s\S]*?)```/g, '<pre style="background:#f3f4f6;padding:8px;border-radius:6px;overflow-x:auto">$1</pre>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+}
+
+async function explainDeeper() {
+  if (!selectedText || !window._lastAIAnswer) return;
+  var panel = getPanelContent();
+  var oldContent = panel.innerHTML;
+  panel.innerHTML = '<div class="ai-loading"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div> 正在深入分析...</div>';
+
+  try {
+    var resp = await fetch('/ai/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          { role: 'system', content: '你是CPA会计辅导老师。请对之前解释过的会计概念进行更深入的分析。给出具体的会计分录示例（借/贷格式）、常见考试陷阱、以及与其他相关会计准则的关联。' },
+          { role: 'user', content: '原始概念：' + selectedText + '\n\n之前的解释：' + window._lastAIAnswer + '\n\n请给出更深入的分析，包括具体的分录示例和考试常见陷阱。' }
+        ],
+        temperature: 0.7,
+        max_tokens: 1500,
+        stream: false
+      })
+    });
+    var data = await resp.json();
+    var deepAnswer = data.choices && data.choices[0] ? data.choices[0].message.content : '深入分析暂时不可用。';
+
+    panel.innerHTML = oldContent + '<div class="ai-card" style="margin-top:12px">' +
+      '<div class="ai-label">🔍 深入分析</div>' +
+      '<div class="ai-answer">' + formatAIAnswer(deepAnswer) + '</div>' +
+      '<button class="btn-sm primary" onclick="saveAIExplanation()" style="margin-top:8px">💾 保存为笔记</button>' +
+    '</div>';
+
+  } catch (e) {
+    panel.innerHTML = oldContent;
+  }
+}
+
+async function saveAIExplanation() {
+  if (!window._lastAIAnswer || !selectedText) return;
+  try {
+    await dbPost('notes', {
+      user_id: userId(),
+      chapter_id: chapterId,
+      page_number: currentPage,
+      selected_text: selectedText.substring(0, 500),
+      note_content: window._lastAIAnswer,
+      note_type: 'ai_explanation'
+    });
+    showToast('AI讲解已保存到笔记 📌');
+  } catch (e) {
+    console.error('Save note error:', e);
+    showToast('保存失败');
+  }
+}
+
+// ============ Notes ============
+async function loadNotes() {
+  var panel = getPanelContent();
+  panel.innerHTML = '<div class="ai-loading"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div> 加载笔记...</div>';
+
+  try {
+    var notes = await dbGet('notes', 'user_id=eq.' + userId() + '&chapter_id=eq.' + chapterId + '&order=created_at.desc');
+
+    var html = '';
+
+    // Add note form
+    html += '<div class="note-input-wrap">';
+    html += '<textarea id="newNoteText" placeholder="写笔记..."></textarea>';
+    html += '<div class="note-actions">';
+    html += '<button class="btn-sm primary" onclick="saveNote()">保存笔记</button>';
+    html += '</div>';
+    html += '</div>';
+
+    if (notes.length === 0) {
+      html += '<div class="empty-state"><div class="icon">📝</div><div class="hint">还没有笔记<br>选中文字后点击 AI讲解，或直接写笔记</div></div>';
+    } else {
+      notes.forEach(function(n) {
+        var icon = n.note_type === 'ai_explanation' ? '🤖' : '📝';
+        html += '<div class="note-card">';
+        if (n.selected_text) {
+          html += '<div class="note-ref" onclick="scrollToPage(' + (n.page_number || 1) + ')">📄 第' + (n.page_number || 1) + '页: "' + escapeHtml(n.selected_text.substring(0, 60)) + (n.selected_text.length > 60 ? '...' : '') + '"</div>';
+        }
+        html += '<div class="note-text">' + icon + ' ' + formatAIAnswer(n.note_content) + '</div>';
+        html += '<div class="note-time">' + formatDate(n.created_at) + '</div>';
+        html += '</div>';
+      });
+    }
+
+    panel.innerHTML = html;
+  } catch (e) {
+    panel.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><div class="hint">笔记加载失败</div></div>';
+  }
+}
+
+async function saveNote() {
+  var text = document.getElementById('newNoteText').value.trim();
+  if (!text) return;
+  try {
+    await dbPost('notes', {
+      user_id: userId(),
+      chapter_id: chapterId,
+      page_number: currentPage,
+      selected_text: selectedText ? selectedText.substring(0, 500) : null,
+      note_content: text,
+      note_type: 'user'
+    });
+    document.getElementById('newNoteText').value = '';
+    loadNotes();
+    showToast('笔记已保存 ✅');
+  } catch (e) {
+    showToast('保存失败，请重试');
+  }
+}
+
+// ============ Timer ============
+function startTimer() {
+  timerInterval = setInterval(function() {
+    if (timerRunning) {
+      timerSec++;
+      updateTimerDisplay();
+      // Save session every 60 seconds
+      if (timerSec % 60 === 0) saveSession();
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  var m = Math.floor(timerSec / 60);
+  var s = timerSec % 60;
+  document.getElementById('timer').textContent =
+    String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+}
+
+async function saveSession() {
+  if (timerSec < 10) return; // Don't save tiny sessions
+  try {
+    await dbPost('study_sessions', {
+      user_id: userId(),
+      chapter_id: chapterId,
+      duration_seconds: timerSec,
+      session_date: new Date().toISOString().split('T')[0]
+    });
+    // Update progress
+    await updateProgressInDB(timerSec);
+    timerSec = 0; // Reset after save
+  } catch (e) {
+    console.log('Session save deferred:', e.message);
+  }
+}
+
+async function updateProgress(chId, status) {
+  var uid = userId();
+  if (!uid) return;
+  try {
+    var existing = await dbGet('user_progress', 'user_id=eq.' + uid + '&chapter_id=eq.' + chId);
+    if (existing.length > 0) {
+      await dbPatch('user_progress', existing[0].id, {
+        status: status,
+        started_at: existing[0].started_at || new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+    } else {
+      await dbPost('user_progress', {
+        user_id: uid,
+        chapter_id: chId,
+        status: status,
+        started_at: new Date().toISOString(),
+        time_spent_seconds: 0
+      });
+    }
+  } catch (e) {
+    console.log('Progress update deferred');
+  }
+}
+
+async function updateProgressInDB(seconds) {
+  var uid = userId();
+  if (!uid) return;
+  try {
+    var existing = await dbGet('user_progress', 'user_id=eq.' + uid + '&chapter_id=eq.' + chapterId);
+    if (existing.length > 0) {
+      var newTime = (existing[0].time_spent_seconds || 0) + seconds;
+      await dbPatch('user_progress', existing[0].id, {
+        time_spent_seconds: newTime,
+        status: 'in_progress',
+        last_position: { page: currentPage },
+        updated_at: new Date().toISOString()
+      });
+    }
+  } catch (e) {}
+}
+
+async function saveProgress() {
+  await updateProgressInDB(timerSec);
+  await saveSession();
+}
+
+// ============ Quiz ============
+function openQuiz() {
+  saveSession();
+  window.location.href = '/quiz.html?ch=' + chapterId;
+}
+
+// ============ Utilities ============
+function escapeHtml(str) {
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  var d = new Date(dateStr);
+  var now = new Date();
+  if (d.toDateString() === now.toDateString()) {
+    return '今天 ' + d.toLocaleTimeString('zh-CN', { hour:'2-digit', minute:'2-digit' });
+  }
+  return d.toLocaleDateString('zh-CN') + ' ' + d.toLocaleTimeString('zh-CN', { hour:'2-digit', minute:'2-digit' });
+}
+
+function showToast(msg) {
+  var t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:9999;pointer-events:none;opacity:0;transition:opacity 0.3s;';
+  document.body.appendChild(t);
+  setTimeout(function() { t.style.opacity = '1'; }, 10);
+  setTimeout(function() { t.style.opacity = '0'; setTimeout(function() { t.remove(); }, 300); }, 1500);
+}
+
+init();
+</script>
+</body>
+</html>
