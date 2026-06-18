@@ -358,8 +358,7 @@
 var chaptersMeta = [];   // from chapters.json
 var progress = {};       // {chapter_id: {status, time_spent_seconds, ...}}
 var checkins = [];       // recent checkins
-var sessions = {};       // today's study time by user
-var user = null;
+var sessions = {};       // today's study time by slot
 var todayStr = new Date().toISOString().split('T')[0];
 
 // Block definitions
@@ -373,8 +372,7 @@ var BLOCKS = [
 // ============ Init ============
 async function init() {
   try {
-    user = await requireAuth();
-    if (!user) return;
+    if (!requireSlot()) return;
     document.getElementById('userName').textContent = displayName();
 
     // Load chapter metadata
@@ -396,28 +394,28 @@ async function init() {
 
 async function loadData() {
   try {
-    var uid = userId();
+    var sid = slotId();
     // Load progress
-    var progData = await dbGet('user_progress', 'user_id=eq.' + uid);
+    var progData = await dbGet('user_progress', 'slot_id=eq.' + sid);
     progData.forEach(function(p) {
       progress[p.chapter_id] = p;
     });
 
     // Load today's checkin
-    var chkData = await dbGet('checkins', 'user_id=eq.' + uid + '&checkin_date=eq.' + todayStr);
+    var chkData = await dbGet('checkins', 'slot_id=eq.' + sid + '&checkin_date=eq.' + todayStr);
     if (chkData.length > 0) {
       checkins = chkData;
     }
 
     // Load streak (recent checkins sorted by date)
-    var allChk = await dbGet('checkins', 'user_id=eq.' + uid + '&order=checkin_date.desc&limit=60');
+    var allChk = await dbGet('checkins', 'slot_id=eq.' + sid + '&order=checkin_date.desc&limit=60');
     checkins = allChk;
 
     // Load today's study sessions for all users (for social display)
     var todaySessions = await dbGet('study_sessions', 'session_date=eq.' + todayStr);
     todaySessions.forEach(function(s) {
-      if (!sessions[s.user_id]) sessions[s.user_id] = 0;
-      sessions[s.user_id] += s.duration_seconds;
+      if (!sessions[s.slot_id]) sessions[s.slot_id] = 0;
+      sessions[s.slot_id] += s.duration_seconds;
     });
 
   } catch (e) {
@@ -461,9 +459,9 @@ function renderCheckinCard() {
   }
 
   // Show today's study time if available
-  var uid = userId();
-  if (sessions[uid]) {
-    var mins = Math.round(sessions[uid] / 60);
+  var sid = slotId();
+  if (sessions[sid]) {
+    var mins = Math.round(sessions[sid] / 60);
     sub.textContent = (todayChecked ? '已打卡 · ' : '') + '今日学习 ' + mins + ' 分钟';
   }
 }
@@ -549,23 +547,23 @@ function openChapter(chId) {
 }
 
 async function doCheckin() {
-  var uid = userId();
-  if (!uid) return;
+  var sid = slotId();
+  if (!sid) return;
   try {
     // Get today's study time
-    var todaySessions = await dbGet('study_sessions', 'user_id=eq.' + uid + '&session_date=eq.' + todayStr);
+    var todaySessions = await dbGet('study_sessions', 'slot_id=eq.' + sid + '&session_date=eq.' + todayStr);
     var totalSec = 0;
     todaySessions.forEach(function(s) { totalSec += s.duration_seconds; });
 
     await dbPost('checkins', {
-      user_id: uid,
+      slot_id: sid,
       checkin_date: todayStr,
       study_minutes: Math.round(totalSec / 60),
       note: ''
     });
 
     // Reload checkins
-    var chkData = await dbGet('checkins', 'user_id=eq.' + uid + '&order=checkin_date.desc&limit=60');
+    var chkData = await dbGet('checkins', 'slot_id=eq.' + uid + '&order=checkin_date.desc&limit=60');
     checkins = chkData;
 
     renderCheckinCard();
@@ -577,8 +575,8 @@ async function doCheckin() {
 }
 
 async function updateProgress(chId, status) {
-  var uid = userId();
-  if (!uid) return;
+  var sid = slotId();
+  if (!sid) return;
   try {
     var existing = progress[chId];
     if (existing) {
@@ -589,7 +587,7 @@ async function updateProgress(chId, status) {
       });
     } else {
       var result = await dbPost('user_progress', {
-        user_id: uid,
+        slot_id: sid,
         chapter_id: chId,
         status: status,
         started_at: new Date().toISOString(),
