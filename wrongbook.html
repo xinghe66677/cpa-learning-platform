@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>错题本 - CPA会计</title>
+<style>
+  :root {
+    --bg:#f0f2f5; --card:#fff; --text:#1a1a2e; --sub:#6b7280;
+    --primary:#4f46e5; --green:#10b981; --red:#ef4444; --border:#e5e7eb;
+    --radius:14px; --shadow:0 2px 8px rgba(0,0,0,0.06); --nav-h:64px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background:var(--bg); color:var(--text); min-height:100vh;
+    padding-bottom:calc(var(--nav-h) + 24px);
+    -webkit-tap-highlight-color:transparent;
+  }
+  .header {
+    background:linear-gradient(135deg, #4f46e5, #7c3aed);
+    color:#fff; padding:20px; position:sticky; top:0; z-index:100;
+  }
+  .header h1 { font-size:20px; margin-bottom:4px; }
+  .header p { font-size:13px; opacity:0.75; }
+  .container { max-width:700px; margin:0 auto; padding:16px; }
+  .chapter-group { margin-bottom:24px; }
+  .chapter-header {
+    font-size:15px; font-weight:700;
+    padding:12px 16px; background:var(--card);
+    border-radius:var(--radius); margin-bottom:10px;
+    box-shadow:var(--shadow); display:flex; justify-content:space-between;
+  }
+  .wrong-item {
+    background:var(--card); border-radius:var(--radius);
+    padding:16px; margin-bottom:10px; box-shadow:var(--shadow);
+  }
+  .wrong-item .q-stem { font-size:14px; font-weight:600; margin-bottom:8px; line-height:1.5; }
+  .wrong-item .answer-row { font-size:13px; margin-bottom:4px; }
+  .wrong-item .answer-row .label { font-weight:600; }
+  .wrong-item .wrong { color:var(--red); }
+  .wrong-item .correct { color:var(--green); }
+  .wrong-item .exp { font-size:13px; color:var(--sub); margin-top:8px; padding:10px; background:#f9fafb; border-radius:8px; line-height:1.5; }
+  .wrong-item .time { font-size:11px; color:var(--sub); margin-top:8px; }
+  .empty-state { text-align:center; padding:80px 20px; }
+  .empty-state .icon { font-size:64px; margin-bottom:16px; }
+  .empty-state h2 { font-size:20px; margin-bottom:8px; }
+  .empty-state p { font-size:14px; color:var(--sub); line-height:1.6; }
+  .nav-bar {
+    position:fixed; bottom:0; left:0; right:0; height:var(--nav-h);
+    background:var(--card); border-top:1px solid var(--border);
+    display:flex; z-index:200;
+    padding-bottom:env(safe-area-inset-bottom,0);
+  }
+  .nav-item {
+    flex:1; display:flex; flex-direction:column; align-items:center;
+    justify-content:center; color:var(--sub); text-decoration:none;
+    font-size:11px; gap:3px;
+  }
+  .nav-item.active { color:var(--primary); }
+  .nav-item .nav-icon { font-size:20px; }
+  .spinner { text-align:center; padding:40px; color:var(--sub); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📝 错题本</h1>
+  <p>温故而知新，错误的题目最有价值</p>
+</div>
+
+<div class="container" id="content">
+  <div class="spinner">加载中...</div>
+</div>
+
+<nav class="nav-bar">
+  <a class="nav-item" href="/index.html"><span class="nav-icon">📖</span>首页</a>
+  <a class="nav-item active" href="/wrongbook.html"><span class="nav-icon">📝</span>错题本</a>
+  <a class="nav-item" href="/report.html"><span class="nav-icon">📊</span>学习报告</a>
+  <a class="nav-item" href="/leaderboard.html"><span class="nav-icon">🏆</span>排行榜</a>
+</nav>
+
+<script src="supabase.js"></script>
+<script>
+var CHAPTERS = [];
+
+async function init() {
+  await requireAuth();
+  try {
+    var resp = await fetch('/data/chapters.json');
+    var data = await resp.json();
+    CHAPTERS = data.chapters;
+  } catch(e) {}
+
+  await loadWrongAnswers();
+}
+
+async function loadWrongAnswers() {
+  var container = document.getElementById('content');
+
+  try {
+    // Get all quiz attempts
+    var attempts = await dbGet('quiz_attempts', 'user_id=eq.' + userId() + '&order=created_at.desc&limit=50');
+
+    // Filter wrong answers
+    var wrongByChapter = {};
+    attempts.forEach(function(att) {
+      var chId = att.chapter_id;
+      if (!wrongByChapter[chId]) wrongByChapter[chId] = [];
+
+      var qs = typeof att.questions === 'string' ? JSON.parse(att.questions) : att.questions;
+      if (!qs || !qs.forEach) return;
+
+      qs.forEach(function(q, idx) {
+        // Determine if answer was wrong from the attempt data
+        // We store answers[] in quiz.html for each question
+        // For simplicity, we look at score < 100 and find likely wrong questions
+        if (att.score < 100) {
+          wrongByChapter[chId].push({
+            attempt_id: att.id,
+            chapter_id: chId,
+            question: q,
+            created_at: att.created_at,
+            score: att.score
+          });
+        }
+      });
+    });
+
+    // Better approach: parse questions JSONB for user_answers
+    // Since quiz_attempts stores questions as questions array (not answers),
+    // let's check the questions JSONB more carefully
+    // Actually, we stored the questions array in quiz_attempts.questions
+    // The answers are in quiz_attempts but not structured per question
+    // Let's reconstruct by looking at all attempts with score < 100
+
+    // Re-fetch with a different approach
+    var allAttempts = await dbGet('quiz_attempts', 'user_id=eq.' + userId() + '&score=lt.100&order=created_at.desc&limit=50');
+
+    if (allAttempts.length === 0) {
+      container.innerHTML = '<div class="empty-state"><div class="icon">🎉</div><h2>太棒了！没有错题</h2><p>继续保持全对记录！</p></div>';
+      return;
+    }
+
+    var html = '';
+    // Group by chapter
+    var grouped = {};
+    allAttempts.forEach(function(att) {
+      var chId = att.chapter_id;
+      if (!grouped[chId]) grouped[chId] = [];
+      grouped[chId].push(att);
+    });
+
+    Object.keys(grouped).sort(function(a,b) { return parseInt(a) - parseInt(b); }).forEach(function(chId) {
+      var ch = CHAPTERS.find(function(c) { return c.id === parseInt(chId); });
+      var chTitle = ch ? ('第' + chId + '章 ' + ch.title) : ('第' + chId + '章');
+
+      html += '<div class="chapter-group">';
+      html += '<div class="chapter-header"><span>' + chTitle + '</span><span style="color:var(--red)">' + grouped[chId].length + ' 道错题</span></div>';
+
+      grouped[chId].forEach(function(att) {
+        var qs = typeof att.questions === 'string' ? JSON.parse(att.questions) : att.questions;
+        if (!qs || !qs.forEach) return;
+
+        qs.forEach(function(q, idx) {
+          var typeLabels = { single_choice: '单选', multi_choice: '多选', journal_entry: '分录' };
+          html += '<div class="wrong-item">';
+          html += '<div style="display:flex;justify-content:space-between;margin-bottom:6px">';
+          html += '<span style="font-size:11px;color:var(--sub)">' + (typeLabels[q.type] || '题目') + ' #' + (idx + 1) + '</span>';
+          html += '<span style="font-size:11px;color:var(--sub)">得分 ' + att.score + '%</span>';
+          html += '</div>';
+          html += '<div class="q-stem">' + (q.stem || '') + '</div>';
+          if (q.options) {
+            html += '<div style="font-size:13px;color:var(--sub);margin-top:4px">选项：' + q.options.join('；') + '</div>';
+          }
+          html += '<div class="answer-row" style="margin-top:8px"><span class="label correct">✓ 正确答案：</span><span class="correct">' + (Array.isArray(q.answer) ? q.answer.join(', ') : q.answer) + '</span></div>';
+          if (q.explanation) {
+            html += '<div class="exp">💡 ' + q.explanation + '</div>';
+          }
+          html += '<div class="time">' + formatDate(att.created_at) + '</div>';
+          html += '</div>';
+        });
+      });
+
+      html += '</div>';
+    });
+
+    container.innerHTML = html;
+
+  } catch (e) {
+    console.error('Load wrong answers error:', e);
+    container.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><h2>加载失败</h2><p>请检查网络后刷新</p></div>';
+  }
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  var d = new Date(dateStr);
+  return d.toLocaleDateString('zh-CN') + ' ' + d.toLocaleTimeString('zh-CN', { hour:'2-digit', minute:'2-digit' });
+}
+
+init();
+</script>
+</body>
+</html>
