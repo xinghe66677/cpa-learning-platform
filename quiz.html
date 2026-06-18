@@ -262,7 +262,7 @@ var answered = false;
 var CHAPTERS = [];
 
 async function init() {
-  await requireAuth();
+  requireSlot();
   try {
     var resp = await fetch('/data/chapters.json');
     var data = await resp.json();
@@ -547,7 +547,7 @@ async function showResults() {
   // Save quiz attempt
   try {
     await dbPost('quiz_attempts', {
-      user_id: userId(),
+      slot_id: slotId(),
       chapter_id: chapterId,
       questions: questions,
       score: score,
