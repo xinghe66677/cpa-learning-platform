@@ -85,7 +85,7 @@
 var CHAPTERS = [];
 
 async function init() {
-  await requireAuth();
+  requireSlot();
   try {
     var resp = await fetch('/data/chapters.json');
     var data = await resp.json();
@@ -100,7 +100,7 @@ async function loadWrongAnswers() {
 
   try {
     // Get all quiz attempts
-    var attempts = await dbGet('quiz_attempts', 'user_id=eq.' + userId() + '&order=created_at.desc&limit=50');
+    var attempts = await dbGet('quiz_attempts', 'slot_id=eq.' + slotId() + '&order=created_at.desc&limit=50');
 
     // Filter wrong answers
     var wrongByChapter = {};
@@ -135,7 +135,7 @@ async function loadWrongAnswers() {
     // Let's reconstruct by looking at all attempts with score < 100
 
     // Re-fetch with a different approach
-    var allAttempts = await dbGet('quiz_attempts', 'user_id=eq.' + userId() + '&score=lt.100&order=created_at.desc&limit=50');
+    var allAttempts = await dbGet('quiz_attempts', 'slot_id=eq.' + slotId() + '&score=lt.100&order=created_at.desc&limit=50');
 
     if (allAttempts.length === 0) {
       container.innerHTML = '<div class="empty-state"><div class="icon">🎉</div><h2>太棒了！没有错题</h2><p>继续保持全对记录！</p></div>';
