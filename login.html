@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CPA会计学习平台 - 登录</title>
+<style>
+  :root {
+    --bg: #f5f5f5;
+    --card: #ffffff;
+    --text: #2c3e50;
+    --sub: #7f8c8d;
+    --primary: #4A90D9;
+    --primary-dark: #357ABD;
+    --border: #e0e6ed;
+    --err: #e74c3c;
+    --radius: 16px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.08);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .container { width: 100%; max-width: 420px; }
+  .logo {
+    text-align: center;
+    color: #fff;
+    margin-bottom: 32px;
+  }
+  .logo-icon { font-size: 48px; display: block; margin-bottom: 8px; }
+  .logo h1 { font-size: 24px; font-weight: 700; }
+  .logo p { font-size: 14px; opacity: 0.85; margin-top: 4px; }
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 32px 28px;
+  }
+  .tabs { display: flex; margin-bottom: 28px; border-bottom: 2px solid var(--border); }
+  .tab {
+    flex: 1;
+    text-align: center;
+    padding: 12px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--sub);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+  }
+  .form-group { margin-bottom: 20px; }
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .form-group input {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 15px;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    transition: border-color 0.2s;
+    background: #fafbfc;
+    outline: none;
+  }
+  .form-group input:focus { border-color: var(--primary); background: #fff; }
+  #nameGroup { display: none; }
+  .btn {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--primary);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    margin-top: 8px;
+  }
+  .btn:hover { background: var(--primary-dark); }
+  .btn:active { transform: scale(0.98); }
+  .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .error {
+    color: var(--err);
+    font-size: 13px;
+    text-align: center;
+    margin-top: 12px;
+    min-height: 20px;
+    line-height: 20px;
+  }
+  .success {
+    color: #27ae60;
+    font-size: 13px;
+    text-align: center;
+    margin-top: 12px;
+  }
+  .footer-text {
+    text-align: center;
+    color: rgba(255,255,255,0.7);
+    font-size: 12px;
+    margin-top: 24px;
+  }
+  .spinner {
+    display: inline-block;
+    width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="logo">
+    <span class="logo-icon">📚</span>
+    <h1>CPA会计学习平台</h1>
+    <p>高志谦 · 会计讲义</p>
+  </div>
+
+  <div class="card">
+    <div class="tabs">
+      <button class="tab active" id="tabLogin" onclick="switchTab('login')">登录</button>
+      <button class="tab" id="tabReg" onclick="switchTab('register')">注册</button>
+    </div>
+
+    <form id="authForm" onsubmit="handleSubmit(event)">
+      <div class="form-group" id="nameGroup">
+        <label>显示名称</label>
+        <input type="text" id="name" placeholder="请输入你的名字" maxlength="20">
+      </div>
+      <div class="form-group">
+        <label>邮箱</label>
+        <input type="email" id="email" placeholder="请输入邮箱" required>
+      </div>
+      <div class="form-group">
+        <label>密码</label>
+        <input type="password" id="password" placeholder="请输入密码（至少6位）" minlength="6" required>
+      </div>
+      <button type="submit" class="btn" id="submitBtn">登 录</button>
+    </form>
+
+    <div class="error" id="errorMsg"></div>
+  </div>
+
+  <p class="footer-text">仅限内部学习使用 · 最多5人</p>
+</div>
+
+<script src="supabase.js"></script>
+<script>
+  var mode = 'login';
+
+  function switchTab(tab) {
+    mode = tab;
+    var t1 = document.getElementById('tabLogin');
+    var t2 = document.getElementById('tabReg');
+    var ng = document.getElementById('nameGroup');
+    var btn = document.getElementById('submitBtn');
+    var err = document.getElementById('errorMsg');
+
+    err.textContent = '';
+
+    if (tab === 'register') {
+      t1.classList.remove('active');
+      t2.classList.add('active');
+      ng.style.display = 'block';
+      btn.textContent = '注 册';
+      document.getElementById('name').required = true;
+    } else {
+      t1.classList.add('active');
+      t2.classList.remove('active');
+      ng.style.display = 'none';
+      btn.textContent = '登 录';
+      document.getElementById('name').required = false;
+    }
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    var btn = document.getElementById('submitBtn');
+    var err = document.getElementById('errorMsg');
+    var email = document.getElementById('email').value.trim();
+    var password = document.getElementById('password').value;
+    var name = document.getElementById('name').value.trim();
+
+    err.textContent = '';
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>处理中...';
+
+    var result;
+    if (mode === 'register') {
+      result = await signup(email, password, name || email.split('@')[0]);
+      if (result.ok) {
+        err.className = 'success';
+        err.textContent = '注册成功！即将跳转...';
+        setTimeout(function() { window.location.href = '/index.html'; }, 800);
+        return;
+      }
+    } else {
+      result = await signin(email, password);
+      if (result.ok) {
+        err.className = 'success';
+        err.textContent = '登录成功！即将跳转...';
+        setTimeout(function() { window.location.href = '/index.html'; }, 500);
+        return;
+      }
+    }
+
+    btn.disabled = false;
+    btn.textContent = mode === 'register' ? '注 册' : '登 录';
+    err.className = 'error';
+
+    // Parse error message
+    var msg = result.data && result.data.msg ? result.data.msg : '操作失败，请重试';
+    if (result.data && result.data.error_description) {
+      msg = result.data.error_description;
+    }
+    if (msg.includes('already registered') || msg.includes('already exists')) {
+      msg = '该邮箱已注册，请直接登录';
+    }
+    if (msg.includes('Invalid login')) {
+      msg = '邮箱或密码错误';
+    }
+    err.textContent = msg;
+  }
+
+  // Check if already logged in
+  (async function() {
+    var session = getSession();
+    if (session.access_token) {
+      document.getElementById('errorMsg').className = 'success';
+      document.getElementById('errorMsg').textContent = '已登录，跳转中...';
+      setTimeout(function() { window.location.href = '/index.html'; }, 300);
+    }
+  })();
+</script>
+</body>
+</html>
