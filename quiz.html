@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>练习题 - CPA会计</title>
+<style>
+  :root {
+    --bg: #f0f2f5;
+    --card: #ffffff;
+    --text: #1a1a2e;
+    --sub: #6b7280;
+    --primary: #4f46e5;
+    --green: #10b981;
+    --red: #ef4444;
+    --border: #e5e7eb;
+    --radius: 14px;
+    --shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .header {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    color: #fff;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header .back { color: #fff; text-decoration: none; font-size: 18px; }
+  .header .title { flex: 1; font-size: 16px; font-weight: 600; }
+  .header .gen-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .header .gen-btn:active { background: rgba(255,255,255,0.3); }
+
+  .container { max-width: 700px; margin: 0 auto; padding: 20px 16px 80px; }
+
+  /* Progress */
+  .quiz-progress {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .progress-dots {
+    display: flex;
+    gap: 6px;
+    flex: 1;
+  }
+  .dot {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: var(--card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    transition: all 0.3s;
+  }
+  .dot.current { border-color: var(--primary); background: var(--primary); color: #fff; }
+  .dot.correct { border-color: var(--green); background: var(--green); color: #fff; }
+  .dot.wrong { border-color: var(--red); background: var(--red); color: #fff; }
+  .progress-info { font-size: 13px; color: var(--sub); min-width: 80px; text-align: right; }
+
+  /* Question Card */
+  .q-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 24px 20px;
+    box-shadow: var(--shadow);
+    margin-bottom: 16px;
+  }
+  .q-type-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .badge-single { background: #dbeafe; color: #1e40af; }
+  .badge-multi { background: #ede9fe; color: #5b21b6; }
+  .badge-journal { background: #fef3c7; color: #92400e; }
+
+  .q-stem {
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--text);
+    margin-bottom: 20px;
+    font-weight: 500;
+  }
+  .q-sub {
+    font-size: 13px;
+    color: var(--sub);
+    margin-bottom: 16px;
+    line-height: 1.5;
+    padding: 10px;
+    background: #f9fafb;
+    border-radius: 8px;
+  }
+
+  /* Options */
+  .options { display: flex; flex-direction: column; gap: 8px; }
+  .option {
+    padding: 14px 16px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: #fafbfc;
+  }
+  .option:hover { border-color: #c7d2fe; }
+  .option:active { transform: scale(0.99); }
+  .option .opt-letter {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+  .option.selected { border-color: var(--primary); background: #eef2ff; }
+  .option.selected .opt-letter { background: var(--primary); color: #fff; }
+  .option.correct-opt { border-color: var(--green); background: #ecfdf5; }
+  .option.correct-opt .opt-letter { background: var(--green); color: #fff; }
+  .option.wrong-opt { border-color: var(--red); background: #fef2f2; }
+  .option.wrong-opt .opt-letter { background: var(--red); color: #fff; }
+  .option.disabled { pointer-events: none; opacity: 0.8; }
+
+  /* Journal Entry Input */
+  .journal-input {
+    width: 100%;
+    min-height: 120px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 14px;
+    font-family: 'Courier New', 'PingFang SC', monospace;
+    resize: vertical;
+    outline: none;
+    line-height: 1.8;
+  }
+  .journal-input:focus { border-color: var(--primary); }
+
+  /* Explanation */
+  .explanation-card {
+    background: #fffbeb;
+    border: 1px solid #fcd34d;
+    border-radius: 10px;
+    padding: 16px;
+    margin-top: 16px;
+    font-size: 14px;
+    line-height: 1.7;
+    display: none;
+  }
+  .explanation-card.show { display: block; animation: slideUp 0.3s ease; }
+  @keyframes slideUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  .explanation-card .exp-label {
+    font-weight: 700;
+    color: #92400e;
+    margin-bottom: 8px;
+  }
+
+  .btn-row { display: flex; gap: 10px; margin-top: 16px; }
+  .btn {
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn.primary { background: var(--primary); color: #fff; flex: 1; }
+  .btn.secondary { background: #f3f4f6; color: var(--text); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Result Screen */
+  .result-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 32px 24px;
+    box-shadow: var(--shadow);
+    text-align: center;
+  }
+  .result-score {
+    font-size: 56px;
+    font-weight: 800;
+    margin: 12px 0;
+  }
+  .result-grade { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+  .result-detail { font-size: 13px; color: var(--sub); margin-bottom: 20px; }
+
+  .spinner {
+    width: 30px; height: 30px;
+    border: 3px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .empty-state { text-align: center; padding: 60px 20px; }
+  .empty-state .icon { font-size: 56px; margin-bottom: 16px; }
+  .empty-state .hint { font-size: 15px; color: var(--sub); line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <a class="back" href="javascript:history.back()">←</a>
+  <span class="title" id="headerTitle">练习题</span>
+  <button class="gen-btn" onclick="generateQuestions()" id="genBtn">🔄 重新生成</button>
+</div>
+
+<div class="container" id="quizContainer">
+  <div class="empty-state">
+    <div class="icon">📝</div>
+    <div class="hint">点击 "重新生成" 按钮<br>AI 将为你生成本章练习题</div>
+    <button class="btn primary" style="margin-top:20px" onclick="generateQuestions()">🪄 生成练习题</button>
+  </div>
+</div>
+
+<script src="supabase.js"></script>
+<script>
+var chapterId = parseInt(new URLSearchParams(window.location.search).get('ch') || '1');
+var chapterMeta = null;
+var questions = [];
+var currentQ = 0;
+var answers = []; // {q_index, user_answer, is_correct}
+var quizStartTime = 0;
+var answered = false;
+var CHAPTERS = [];
+
+async function init() {
+  await requireAuth();
+  try {
+    var resp = await fetch('/data/chapters.json');
+    var data = await resp.json();
+    CHAPTERS = data.chapters;
+    chapterMeta = CHAPTERS.find(function(c) { return c.id === chapterId; });
+    if (chapterMeta) {
+      document.getElementById('headerTitle').textContent = '第' + chapterId + '章 · ' + chapterMeta.title;
+    }
+  } catch(e) {}
+}
+
+async function generateQuestions() {
+  var container = document.getElementById('quizContainer');
+  container.innerHTML = '<div style="text-align:center;padding:60px 20px"><div class="spinner"></div><p style="color:var(--sub)">AI 正在生成练习题...</p></div>';
+
+  var chTitle = chapterMeta ? chapterMeta.title : '会计';
+
+  try {
+    var resp = await fetch('/ai/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {
+            role: 'system',
+            content: '你是CPA会计考试出题专家。请根据章节内容生成5道练习题。题型：2道单选题、2道多选题、1道分录题。每道题需包含题目、选项（选择题）、正确答案和解析。输出为严格的JSON格式：{"questions":[{"type":"single_choice","stem":"...","options":["A. ...","B. ...","C. ...","D. ..."],"answer":"A","explanation":"..."},{"type":"multi_choice",...},{"type":"journal_entry","stem":"业务描述","answer":"借：XXX\n贷：YYY","explanation":"..."}]}。只输出JSON，不要其他内容。'
+          },
+          {
+            role: 'user',
+            content: '请为CPA会计「' + chTitle + '」章节生成5道练习题。题目要覆盖核心知识点，难度适中。'
+          }
+        ],
+        temperature: 0.8,
+        max_tokens: 3000,
+        stream: false
+      })
+    });
+
+    var data = await resp.json();
+    var content = data.choices && data.choices[0] ? data.choices[0].message.content : '';
+
+    // Parse JSON from AI response
+    var jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      var parsed = JSON.parse(jsonMatch[0]);
+      questions = parsed.questions || [];
+    } else {
+      throw new Error('Invalid AI response format');
+    }
+
+    if (questions.length === 0) {
+      throw new Error('No questions generated');
+    }
+
+    currentQ = 0;
+    answers = [];
+    quizStartTime = Date.now();
+    answered = false;
+    renderQuestion();
+
+  } catch (e) {
+    console.error('Generate error:', e);
+    container.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><div class="hint">AI生成题目失败<br>请稍后重试</div><button class="btn primary" style="margin-top:16px" onclick="generateQuestions()">🔄 重试</button></div>';
+  }
+}
+
+function renderQuestion() {
+  if (currentQ >= questions.length) {
+    showResults();
+    return;
+  }
+
+  var q = questions[currentQ];
+  var container = document.getElementById('quizContainer');
+  answered = false;
+
+  // Progress dots
+  var dotsHtml = '<div class="quiz-progress"><div class="progress-dots">';
+  for (var i = 0; i < questions.length; i++) {
+    var cls = 'dot';
+    if (i === currentQ) cls = 'dot current';
+    else if (answers[i] && answers[i].is_correct) cls = 'dot correct';
+    else if (answers[i] && !answers[i].is_correct) cls = 'dot wrong';
+    dotsHtml += '<div class="' + cls + '">' + (i + 1) + '</div>';
+  }
+  dotsHtml += '</div><div class="progress-info">' + (currentQ + 1) + '/' + questions.length + '</div></div>';
+
+  var html = dotsHtml + '<div class="q-card">';
+
+  // Type badge
+  var typeLabels = { single_choice: '单选题', multi_choice: '多选题', journal_entry: '分录题' };
+  var typeClasses = { single_choice: 'badge-single', multi_choice: 'badge-multi', journal_entry: 'badge-journal' };
+  html += '<span class="q-type-badge ' + (typeClasses[q.type] || 'badge-single') + '">' + (typeLabels[q.type] || q.type) + '</span>';
+
+  html += '<div class="q-stem">' + (q.stem || '') + '</div>';
+  if (q.context) html += '<div class="q-sub">' + q.context + '</div>';
+
+  if (q.type === 'journal_entry') {
+    html += '<textarea class="journal-input" id="journalAnswer" placeholder="请在此编写会计分录...&#10;例：借：银行存款  1000&#10;　　贷：主营业务收入  1000"></textarea>';
+    html += '<div class="btn-row"><button class="btn primary" onclick="submitJournal()">提交答案</button></div>';
+  } else if (q.type === 'multi_choice') {
+    html += '<div class="options" id="optionsWrap">';
+    (q.options || []).forEach(function(opt, idx) {
+      var letter = String.fromCharCode(65 + idx);
+      html += '<div class="option multi-opt" data-idx="' + idx + '" data-letter="' + letter + '" onclick="toggleMultiOption(this)"><span class="opt-letter">' + letter + '</span><span>' + opt + '</span></div>';
+    });
+    html += '</div><div class="btn-row"><button class="btn primary" onclick="submitMulti()">提交答案</button></div>';
+  } else {
+    html += '<div class="options" id="optionsWrap">';
+    (q.options || []).forEach(function(opt, idx) {
+      var letter = String.fromCharCode(65 + idx);
+      html += '<div class="option" data-letter="' + letter + '" onclick="selectOption(this, \'' + letter + '\')"><span class="opt-letter">' + letter + '</span><span>' + opt + '</span></div>';
+    });
+    html += '</div>';
+  }
+
+  html += '<div class="explanation-card" id="explanationCard"><div class="exp-label">📖 解析</div><div id="explanationText"></div></div>';
+  html += '</div>';
+
+  container.innerHTML = html;
+  window.getSelection().removeAllRanges();
+}
+
+function selectOption(el, letter) {
+  if (answered) return;
+  answered = true;
+  var q = questions[currentQ];
+  var correct = q.answer || '';
+
+  // Mark selected
+  el.classList.add('selected');
+  var allOpts = document.querySelectorAll('#optionsWrap .option');
+  allOpts.forEach(function(o) { o.classList.add('disabled'); });
+
+  // Show correct/wrong
+  var isCorrect = (letter === correct);
+  if (isCorrect) {
+    el.classList.add('correct-opt');
+  } else {
+    el.classList.add('wrong-opt');
+    // Show the correct one
+    allOpts.forEach(function(o) {
+      if (o.dataset.letter === correct) o.classList.add('correct-opt');
+    });
+  }
+
+  answers[currentQ] = { q_index: currentQ, user_answer: letter, correct_answer: correct, is_correct: isCorrect, type: 'single_choice' };
+
+  // Show explanation
+  var expCard = document.getElementById('explanationCard');
+  expCard.classList.add('show');
+  document.getElementById('explanationText').textContent = q.explanation || '暂无解析';
+
+  // Add next button
+  var btnRow = document.querySelector('.q-card .btn-row') || document.createElement('div');
+  if (!document.querySelector('.q-card .btn-row')) {
+    btnRow.className = 'btn-row';
+    document.querySelector('.q-card').appendChild(btnRow);
+  }
+  btnRow.innerHTML = '<button class="btn primary" onclick="nextQuestion()">' + (currentQ < questions.length - 1 ? '下一题 →' : '查看结果 →') + '</button>';
+}
+
+function toggleMultiOption(el) {
+  if (answered) return;
+  el.classList.toggle('selected');
+}
+
+function submitMulti() {
+  if (answered) return;
+  answered = true;
+  var q = questions[currentQ];
+  var correctAnswers = Array.isArray(q.answer) ? q.answer : [q.answer];
+
+  var selected = [];
+  document.querySelectorAll('#optionsWrap .option.selected').forEach(function(o) {
+    selected.push(o.dataset.letter);
+  });
+
+  var allOpts = document.querySelectorAll('#optionsWrap .option');
+  allOpts.forEach(function(o) { o.classList.add('disabled'); });
+
+  // Sort both for comparison
+  var sortedSel = selected.slice().sort().join('');
+  var sortedCor = correctAnswers.slice().sort().join('');
+  var isCorrect = (sortedSel === sortedCor);
+
+  allOpts.forEach(function(o) {
+    if (correctAnswers.indexOf(o.dataset.letter) !== -1) o.classList.add('correct-opt');
+    if (selected.indexOf(o.dataset.letter) !== -1 && correctAnswers.indexOf(o.dataset.letter) === -1) o.classList.add('wrong-opt');
+  });
+
+  answers[currentQ] = { q_index: currentQ, user_answer: selected.join(','), correct_answer: correctAnswers.join(','), is_correct: isCorrect, type: 'multi_choice' };
+
+  var expCard = document.getElementById('explanationCard');
+  expCard.classList.add('show');
+  document.getElementById('explanationText').textContent = q.explanation || '暂无解析';
+
+  var card = document.querySelector('.q-card');
+  var btnRow = document.createElement('div');
+  btnRow.className = 'btn-row';
+  btnRow.innerHTML = '<button class="btn primary" onclick="nextQuestion()">' + (currentQ < questions.length - 1 ? '下一题 →' : '查看结果 →') + '</button>';
+  card.appendChild(btnRow);
+}
+
+function submitJournal() {
+  if (answered) return;
+  answered = true;
+  var q = questions[currentQ];
+  var userAnswer = document.getElementById('journalAnswer').value.trim();
+  var correctAnswer = q.answer || '';
+
+  // Simple comparison (case insensitive, whitespace normalized)
+  var norm = function(s) { return s.replace(/\s+/g, '').toLowerCase(); };
+  var isCorrect = norm(userAnswer).length > 0 && (norm(userAnswer).includes(norm(correctAnswer)) || norm(correctAnswer).includes(norm(userAnswer)));
+
+  answers[currentQ] = { q_index: currentQ, user_answer: userAnswer, correct_answer: correctAnswer, is_correct: isCorrect, type: 'journal_entry' };
+
+  var expCard = document.getElementById('explanationCard');
+  expCard.classList.add('show');
+  var expHtml = '<div style="margin-bottom:8px"><strong>你的答案：</strong><pre style="background:#f3f4f6;padding:8px;border-radius:6px;margin:4px 0">' + (userAnswer || '(未作答)') + '</pre></div>';
+  expHtml += '<div><strong>参考答案：</strong><pre style="background:#ecfdf5;padding:8px;border-radius:6px;margin:4px 0">' + correctAnswer + '</pre></div>';
+  if (q.explanation) expHtml += '<div style="margin-top:8px">' + q.explanation + '</div>';
+  document.getElementById('explanationText').innerHTML = expHtml;
+
+  var card = document.querySelector('.q-card');
+  var btnRow = document.createElement('div');
+  btnRow.className = 'btn-row';
+  btnRow.innerHTML = '<button class="btn primary" onclick="nextQuestion()">' + (currentQ < questions.length - 1 ? '下一题 →' : '查看结果 →') + '</button>';
+  card.appendChild(btnRow);
+}
+
+function nextQuestion() {
+  currentQ++;
+  if (currentQ < questions.length) {
+    answered = false;
+    renderQuestion();
+  } else {
+    showResults();
+  }
+}
+
+async function showResults() {
+  var total = questions.length;
+  var correctCount = answers.filter(function(a) { return a.is_correct; }).length;
+  var score = Math.round(correctCount / total * 100);
+  var totalTime = Math.round((Date.now() - quizStartTime) / 1000);
+
+  var grade = '', gradeColor = '';
+  if (score >= 80) { grade = '优秀 🎉'; gradeColor = 'var(--green)'; }
+  else if (score >= 60) { grade = '良好 👍'; gradeColor = '#f59e0b'; }
+  else { grade = '继续加油 💪'; gradeColor = 'var(--red)'; }
+
+  var container = document.getElementById('quizContainer');
+  var html = '<div class="result-card">';
+  html += '<div style="font-size:48px">' + (score >= 80 ? '🏆' : score >= 60 ? '📚' : '📖') + '</div>';
+  html += '<div class="result-score" style="color:' + gradeColor + '">' + score + '</div>';
+  html += '<div class="result-grade" style="color:' + gradeColor + '">' + grade + '</div>';
+  html += '<div class="result-detail">' + correctCount + '/' + total + ' 正确 · 用时 ' + formatTime(totalTime) + '</div>';
+
+  // Per-question summary
+  html += '<div style="text-align:left;margin-top:20px">';
+  questions.forEach(function(q, i) {
+    var a = answers[i];
+    var icon = a && a.is_correct ? '✅' : '❌';
+    var typeLabel = { single_choice: '单选', multi_choice: '多选', journal_entry: '分录' };
+    html += '<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:13px">' +
+      icon + ' <strong>' + (typeLabel[q.type] || q.type) + '</strong>：' + (q.stem || '').substring(0, 50) + '...' +
+      (a && !a.is_correct ? '<br><span style="color:var(--sub)">你的：' + a.user_answer + ' → 正确：' + a.correct_answer + '</span>' : '') +
+    '</div>';
+  });
+  html += '</div>';
+
+  html += '<div style="margin-top:20px;display:flex;gap:10px">';
+  html += '<button class="btn secondary" onclick="generateQuestions()" style="flex:1">🔄 再做一组</button>';
+  html += '<button class="btn primary" onclick="window.location.href=\'/reader.html?ch=' + chapterId + '\'" style="flex:1">📖 回阅读器</button>';
+  html += '</div>';
+  html += '</div>';
+
+  container.innerHTML = html;
+
+  // Save quiz attempt
+  try {
+    await dbPost('quiz_attempts', {
+      user_id: userId(),
+      chapter_id: chapterId,
+      questions: questions,
+      score: score,
+      total_time_seconds: totalTime,
+      attempt_number: 1
+    });
+  } catch (e) {
+    console.log('Quiz save deferred:', e.message);
+  }
+}
+
+function formatTime(sec) {
+  var m = Math.floor(sec / 60);
+  var s = sec % 60;
+  return m + '分' + s + '秒';
+}
+
+init();
+</script>
+</body>
+</html>
