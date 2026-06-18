@@ -119,12 +119,15 @@
 <script src="supabase.js"></script>
 <script>
 var period = 'today';
-var user = null;
-var allUsers = {}; // {user_id: {display_name, email}}
+var profileNames = {}; // {slot_id: display_name}
 
 async function init() {
-  user = await requireAuth();
-  if (!user) return;
+  if (!requireSlot()) return;
+  // Load profiles for display names
+  try {
+    var profiles = await getProfiles();
+    profiles.forEach(function(p) { profileNames[p.slot_id] = p.display_name; });
+  } catch(e) {}
   await loadData();
 }
 
@@ -132,77 +135,46 @@ async function loadData() {
   var range = getDateRange();
 
   try {
-    // Load all study sessions (RLS allows authenticated users to read all)
     var sessions = await dbGet('study_sessions', 'order=session_date.desc&limit=500');
-
-    // Load all checkins
     var checkins = await dbGet('checkins', 'order=checkin_date.desc&limit=200');
 
-    // Load all progress
-    var progress = await dbGet('user_progress', 'select=*');
-
-    // Build user display names from the data
-    // Since we can't query auth.users directly from client, we use stored user data
-    // Each user's display name is stored in localStorage when they log in
-    // For the leaderboard, we use user_id as identifier
-
-    // Aggregate by user_id
+    // Aggregate by slot_id
     var userStats = {};
-    var uid = userId();
+    var sid = slotId();
 
-    // Process sessions
     sessions.forEach(function(s) {
       var d = (s.session_date || '').split('T')[0];
       if (!inRange(d, range)) return;
-
-      if (!userStats[s.user_id]) {
-        userStats[s.user_id] = { studySec: 0, chapters: {}, checkins: 0 };
-      }
-      userStats[s.user_id].studySec += s.duration_seconds || 0;
-      if (s.chapter_id) {
-        userStats[s.user_id].chapters[s.chapter_id] = true;
-      }
+      var key = s.slot_id;
+      if (!userStats[key]) userStats[key] = { studySec: 0, chapters: {}, checkins: 0 };
+      userStats[key].studySec += s.duration_seconds || 0;
+      if (s.chapter_id) userStats[key].chapters[s.chapter_id] = true;
     });
 
-    // Process checkins
     checkins.forEach(function(c) {
       var d = (c.checkin_date || '').split('T')[0];
       if (!inRange(d, range)) return;
-      if (!userStats[c.user_id]) {
-        userStats[c.user_id] = { studySec: 0, chapters: {}, checkins: 0 };
-      }
-      userStats[c.user_id].checkins++;
+      var key = c.slot_id;
+      if (!userStats[key]) userStats[key] = { studySec: 0, chapters: {}, checkins: 0 };
+      userStats[key].checkins++;
     });
 
-    // Build leaderboard
-    var entries = Object.keys(userStats).map(function(uidKey) {
-      var s = userStats[uidKey];
+    var entries = Object.keys(userStats).map(function(slotKey) {
+      var s = userStats[slotKey];
+      var slotNum = parseInt(slotKey);
       return {
-        user_id: uidKey,
+        slot_id: slotNum,
         studyMin: Math.round(s.studySec / 60),
         chaptersCount: Object.keys(s.chapters).length,
-        checkins: s.checkins
+        checkins: s.checkins,
+        display_name: profileNames[slotNum] || ('学友' + slotNum),
+        isMe: (slotNum === sid)
       };
     });
 
-    // Sort by study time desc
     entries.sort(function(a, b) { return b.studyMin - a.studyMin; });
 
-    // Get display names - use a simple mapping
-    // In a real app, we'd query a profiles table
-    // For now, use user_id short form
-    entries.forEach(function(e) {
-      if (e.user_id === uid) {
-        e.display_name = displayName() + ' (我)';
-        e.isMe = true;
-      } else {
-        e.display_name = '学友 ' + e.user_id.substring(0, 6);
-        e.isMe = false;
-      }
-    });
-
     renderLeaderboard(entries);
-
   } catch (e) {
     console.error('Leaderboard error:', e);
     document.getElementById('content').innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>加载排行榜失败</p></div>';
