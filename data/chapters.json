@@ -1,0 +1,21 @@
+{
+  "course": "CPA会计 · 高志谦讲义",
+  "chapters": [
+    {"id": 1,  "block": "第一版块 总论",                      "title": "总论",                        "file": "01.pdf", "pages": 0},
+    {"id": 2,  "block": "第二版块 常规非现金资产专题",         "title": "存货",                        "file": "02.pdf", "pages": 0},
+    {"id": 3,  "block": "第二版块 常规非现金资产专题",         "title": "固定资产",                    "file": "03.pdf", "pages": 0},
+    {"id": 4,  "block": "第二版块 常规非现金资产专题",         "title": "无形资产",                    "file": "04.pdf", "pages": 0},
+    {"id": 5,  "block": "第二版块 常规非现金资产专题",         "title": "投资性房地产",                "file": "05.pdf", "pages": 0},
+    {"id": 6,  "block": "第二版块 常规非现金资产专题",         "title": "资产减值",                    "file": "06.pdf", "pages": 0},
+    {"id": 7,  "block": "第二版块 常规非现金资产专题",         "title": "非货币性资产交换",            "file": "07.pdf", "pages": 0},
+    {"id": 8,  "block": "第二版块 常规非现金资产专题",         "title": "持有待售的非流动资产",        "file": "08.pdf", "pages": 0},
+    {"id": 9,  "block": "第三版块 长期股权投资与金融工具专题",  "title": "长期股权投资与合营安排",      "file": "09.pdf", "pages": 0},
+    {"id": 10, "block": "第三版块 长期股权投资与金融工具专题",  "title": "金融工具",                    "file": "10.pdf", "pages": 0},
+    {"id": 11, "block": "第四版块 负债及所有者权益专题",       "title": "负债",                        "file": "11.pdf", "pages": 0},
+    {"id": 12, "block": "第四版块 负债及所有者权益专题",       "title": "职工薪酬",                    "file": "12.pdf", "pages": 0},
+    {"id": 13, "block": "第四版块 负债及所有者权益专题",       "title": "借款费用",                    "file": "13.pdf", "pages": 0},
+    {"id": 14, "block": "第四版块 负债及所有者权益专题",       "title": "或有事项",                    "file": "14.pdf", "pages": 0},
+    {"id": 15, "block": "第四版块 负债及所有者权益专题",       "title": "债务重组",                    "file": "15.pdf", "pages": 0},
+    {"id": 16, "block": "第四版块 负债及所有者权益专题",       "title": "所有者权益",                  "file": "16.pdf", "pages": 0}
+  ]
+}
