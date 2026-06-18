@@ -137,7 +137,7 @@ var allCheckins = [];
 var allQuizzes = [];
 
 async function init() {
-  await requireAuth();
+  requireSlot();
   try {
     var resp = await fetch('/data/chapters.json');
     var data = await resp.json();
@@ -147,13 +147,13 @@ async function init() {
 }
 
 async function loadData() {
-  var uid = userId();
+  var sid = slotId();
   try {
     var results = await Promise.all([
-      dbGet('study_sessions', 'user_id=eq.' + uid + '&order=session_date.desc&limit=200'),
-      dbGet('user_progress', 'user_id=eq.' + uid),
-      dbGet('checkins', 'user_id=eq.' + uid + '&order=checkin_date.desc&limit=60'),
-      dbGet('quiz_attempts', 'user_id=eq.' + uid + '&order=created_at.desc&limit=50')
+      dbGet('study_sessions', 'slot_id=eq.' + sid + '&order=session_date.desc&limit=200'),
+      dbGet('user_progress', 'slot_id=eq.' + uid),
+      dbGet('checkins', 'slot_id=eq.' + sid + '&order=checkin_date.desc&limit=60'),
+      dbGet('quiz_attempts', 'slot_id=eq.' + sid + '&order=created_at.desc&limit=50')
     ]);
     allSessions = results[0];
     allProgress = results[1];
