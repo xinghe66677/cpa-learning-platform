@@ -453,8 +453,7 @@ var timerRunning = true;
 var CHAPTERS = [];
 
 async function init() {
-  user = await requireAuth();
-  if (!user) return;
+  if (!requireSlot()) return;
 
   // Load chapter metadata
   try {
@@ -774,7 +773,7 @@ async function saveAIExplanation() {
   if (!window._lastAIAnswer || !selectedText) return;
   try {
     await dbPost('notes', {
-      user_id: userId(),
+      slot_id: slotId(),
       chapter_id: chapterId,
       page_number: currentPage,
       selected_text: selectedText.substring(0, 500),
@@ -794,7 +793,7 @@ async function loadNotes() {
   panel.innerHTML = '<div class="ai-loading"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div> 加载笔记...</div>';
 
   try {
-    var notes = await dbGet('notes', 'user_id=eq.' + userId() + '&chapter_id=eq.' + chapterId + '&order=created_at.desc');
+    var notes = await dbGet('notes', 'slot_id=eq.' + slotId() + '&chapter_id=eq.' + chapterId + '&order=created_at.desc');
 
     var html = '';
 
@@ -832,7 +831,7 @@ async function saveNote() {
   if (!text) return;
   try {
     await dbPost('notes', {
-      user_id: userId(),
+      slot_id: slotId(),
       chapter_id: chapterId,
       page_number: currentPage,
       selected_text: selectedText ? selectedText.substring(0, 500) : null,
@@ -870,7 +869,7 @@ async function saveSession() {
   if (timerSec < 10) return; // Don't save tiny sessions
   try {
     await dbPost('study_sessions', {
-      user_id: userId(),
+      slot_id: slotId(),
       chapter_id: chapterId,
       duration_seconds: timerSec,
       session_date: new Date().toISOString().split('T')[0]
@@ -884,10 +883,10 @@ async function saveSession() {
 }
 
 async function updateProgress(chId, status) {
-  var uid = userId();
+  var uid = slotId();
   if (!uid) return;
   try {
-    var existing = await dbGet('user_progress', 'user_id=eq.' + uid + '&chapter_id=eq.' + chId);
+    var existing = await dbGet('user_progress', 'slot_id=eq.' + uid + '&chapter_id=eq.' + chId);
     if (existing.length > 0) {
       await dbPatch('user_progress', existing[0].id, {
         status: status,
@@ -896,7 +895,7 @@ async function updateProgress(chId, status) {
       });
     } else {
       await dbPost('user_progress', {
-        user_id: uid,
+        slot_id: uid,
         chapter_id: chId,
         status: status,
         started_at: new Date().toISOString(),
@@ -909,10 +908,10 @@ async function updateProgress(chId, status) {
 }
 
 async function updateProgressInDB(seconds) {
-  var uid = userId();
+  var uid = slotId();
   if (!uid) return;
   try {
-    var existing = await dbGet('user_progress', 'user_id=eq.' + uid + '&chapter_id=eq.' + chapterId);
+    var existing = await dbGet('user_progress', 'slot_id=eq.' + uid + '&chapter_id=eq.' + chapterId);
     if (existing.length > 0) {
       var newTime = (existing[0].time_spent_seconds || 0) + seconds;
       await dbPatch('user_progress', existing[0].id, {
